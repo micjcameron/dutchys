@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: sauna-backend-api
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: sauna
+      MOLLIE_API_KEY: ${MOLLIE_API_KEY}
+    depends_on:
+      - db
+  db:
+    image: postgres:15-alpine
+    container_name: sauna-backend-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sauna
+    ports:
+      - "5432:5432"
+    volumes:
+      - sauna-backend-pg:/var/lib/postgresql/data
+
+volumes:
+  sauna-backend-pg:
