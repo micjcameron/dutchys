@@ -1,32 +1,30 @@
-version: "3.9"
-
 services:
   api:
     build: .
-    container_name: sauna-backend-api
+    container_name: dutchys-backend-api
     ports:
-      - "3000:3000"
+      - "8080:8080"
     environment:
       NODE_ENV: production
-      PORT: 3000
+      PORT: 8080
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
-      DB_NAME: sauna
+      DB_NAME: dutchys
       MOLLIE_API_KEY: ${MOLLIE_API_KEY}
     depends_on:
       - db
   db:
     image: postgres:15-alpine
-    container_name: sauna-backend-db
+    container_name: dutchys-backend-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: sauna
+      POSTGRES_DB: dutchys
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - sauna-backend-pg:/var/lib/postgresql/data
 

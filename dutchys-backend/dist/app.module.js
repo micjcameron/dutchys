@@ -10,7 +10,11 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const typeorm_1 = require("@nestjs/typeorm");
+const app_controller_1 = require("./app.controller");
+const carts_module_1 = require("./carts/carts.module");
 const payments_module_1 = require("./payments/payments.module");
+const sales_module_1 = require("./sales/sales.module");
+const sessions_module_1 = require("./sessions/sessions.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -29,13 +33,17 @@ exports.AppModule = AppModule = __decorate([
                     port: config.get('DB_PORT', 5432),
                     username: config.get('DB_USER', 'postgres'),
                     password: config.get('DB_PASSWORD', 'postgres'),
-                    database: config.get('DB_NAME', 'sauna'),
+                    database: config.get('DB_NAME', 'dutchys'),
                     autoLoadEntities: true,
                     synchronize: true,
                 }),
             }),
+            carts_module_1.CartsModule,
             payments_module_1.PaymentsModule,
+            sales_module_1.SalesModule,
+            sessions_module_1.SessionsModule,
         ],
+        controllers: [app_controller_1.AppController],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

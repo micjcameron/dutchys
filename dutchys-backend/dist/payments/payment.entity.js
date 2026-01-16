@@ -20,7 +20,7 @@ __decorate([
     __metadata("design:type", String)
 ], Payment.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'mollie_payment_id', nullable: true }),
+    (0, typeorm_1.Column)({ name: 'mollie_payment_id', type: 'varchar', nullable: true }),
     __metadata("design:type", Object)
 ], Payment.prototype, "molliePaymentId", void 0);
 __decorate([

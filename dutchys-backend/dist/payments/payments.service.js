@@ -23,10 +23,11 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         this.configService = configService;
         this.logger = new common_1.Logger(PaymentsService_1.name);
         this.mollieApiKey = this.configService.get('MOLLIE_API_KEY', '');
-        this.mollieClient = (0, api_client_1.createMollieClient)({ apiKey: this.mollieApiKey });
+        this.mollieClient = this.mollieApiKey ? (0, api_client_1.createMollieClient)({ apiKey: this.mollieApiKey }) : null;
     }
     async createPayment(dto) {
-        const molliePayment = await this.mollieClient.payments.create({
+        const mollieClient = this.getMollieClient();
+        const molliePayment = await mollieClient.payments.create({
             amount: {
                 currency: dto.currency,
                 value: dto.amountValue,
@@ -55,6 +56,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         };
     }
     async handleWebhook(molliePaymentId) {
+        this.assertApiKey();
         const molliePayment = await this.fetchMolliePayment(molliePaymentId);
         const payment = await this.paymentsRepository.findByMollieId(molliePaymentId);
         if (!payment) {
@@ -71,6 +73,17 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             },
         });
         return response.data;
+    }
+    getMollieClient() {
+        if (!this.mollieClient) {
+            throw new Error('MOLLIE_API_KEY is not configured');
+        }
+        return this.mollieClient;
+    }
+    assertApiKey() {
+        if (!this.mollieApiKey) {
+            throw new Error('MOLLIE_API_KEY is not configured');
+        }
     }
     mapStatus(status) {
         switch (status) {

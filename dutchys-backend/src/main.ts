@@ -6,6 +6,12 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
 
@@ -17,7 +23,7 @@ async function bootstrap() {
     }),
   );
 
-  const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+  const port = process.env.PORT ? Number(process.env.PORT) : 8080;
   await app.listen(port);
 }
 

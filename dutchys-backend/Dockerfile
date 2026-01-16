@@ -20,6 +20,6 @@ COPY --from=base /app/package.json ./
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/dist ./dist
 
-EXPOSE 3000
+EXPOSE 8080
 
 CMD ["node", "dist/main.js"]
