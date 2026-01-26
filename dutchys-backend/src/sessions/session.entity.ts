@@ -1,4 +1,5 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { ProductType } from '../common/product-type.enum';
 
 @Entity('sessions')
 export class Session {
@@ -64,6 +65,9 @@ export class Session {
 
   @Column({ name: 'cart_id', type: 'uuid', nullable: true })
   cartId!: string | null;
+
+  @Column({ name: 'product_type', type: 'enum', enum: ProductType, nullable: true })
+  productType!: ProductType | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

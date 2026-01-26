@@ -1,8 +1,13 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ProductType } from '../../common/product-type.enum';
 
 export class CreateSaleDto {
   @IsUUID()
   cartId!: string;
+
+  @IsOptional()
+  @IsEnum(ProductType)
+  productType?: ProductType;
 
   @IsString()
   @IsNotEmpty()

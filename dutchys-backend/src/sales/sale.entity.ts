@@ -1,4 +1,5 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { ProductType } from '../common/product-type.enum';
 
 @Entity('sales')
 export class Sale {
@@ -7,6 +8,9 @@ export class Sale {
 
   @Column({ name: 'cart_id', type: 'uuid' })
   cartId!: string;
+
+  @Column({ name: 'product_type', type: 'enum', enum: ProductType, nullable: true })
+  productType!: ProductType | null;
 
   @Column({ name: 'first_name', type: 'varchar' })
   firstName!: string;

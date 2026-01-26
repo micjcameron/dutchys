@@ -18,7 +18,7 @@ async function bootstrap() {
         forbidNonWhitelisted: true,
         transform: true,
     }));
-    const port = process.env.PORT ? Number(process.env.PORT) : 8080;
+    const port = process.env.PORT ? Number(process.env.PORT) : 8081;
     await app.listen(port);
 }
 bootstrap();

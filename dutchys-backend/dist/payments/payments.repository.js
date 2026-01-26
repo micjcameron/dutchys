@@ -27,6 +27,9 @@ let PaymentsRepository = class PaymentsRepository {
     save(payment) {
         return this.repository.save(payment);
     }
+    findById(id) {
+        return this.repository.findOne({ where: { id } });
+    }
     findByMollieId(molliePaymentId) {
         return this.repository.findOne({ where: { molliePaymentId } });
     }

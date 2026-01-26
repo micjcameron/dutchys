@@ -59,6 +59,10 @@ export class SessionsService {
       session.cartId = dto.cartId;
     }
 
+    if (dto.productType !== undefined) {
+      session.productType = dto.productType ?? null;
+    }
+
     const saved = await this.sessionsRepository.save(session);
 
     return {

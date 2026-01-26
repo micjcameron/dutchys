@@ -23,6 +23,14 @@ export class PaymentsService {
 
   async createPayment(dto: CreatePaymentDto) {
     const mollieClient = this.getMollieClient();
+    this.logger.log('Creating Mollie payment', {
+      amountValue: dto.amountValue,
+      currency: dto.currency,
+      description: dto.description,
+      redirectUrl: dto.redirectUrl,
+      webhookUrl: dto.webhookUrl,
+      metadata: dto.metadata,
+    });
     const molliePayment = await mollieClient.payments.create({
       amount: {
         currency: dto.currency,
@@ -47,6 +55,13 @@ export class PaymentsService {
 
     const saved = await this.paymentsRepository.save(payment);
 
+    this.logger.log('Mollie payment created', {
+      paymentId: saved.id,
+      molliePaymentId: molliePayment.id ?? null,
+      status: saved.status,
+      checkoutUrl: molliePayment?._links?.checkout?.href ?? null,
+    });
+
     return {
       id: saved.id,
       molliePaymentId: saved.molliePaymentId,
@@ -57,6 +72,7 @@ export class PaymentsService {
 
   async handleWebhook(molliePaymentId: string): Promise<Payment | null> {
     this.assertApiKey();
+    this.logger.log('Handling Mollie webhook', { molliePaymentId });
     const molliePayment = await this.fetchMolliePayment(molliePaymentId);
     const payment = await this.paymentsRepository.findByMollieId(molliePaymentId);
 
@@ -66,10 +82,23 @@ export class PaymentsService {
     }
 
     payment.status = this.mapStatus(molliePayment.status);
+    this.logger.log('Updated payment status from Mollie', {
+      molliePaymentId,
+      status: payment.status,
+    });
     return this.paymentsRepository.save(payment);
   }
 
+  async getPayment(id: string): Promise<Payment | null> {
+    const payment = await this.paymentsRepository.findById(id);
+    if (payment) {
+      return payment;
+    }
+    return this.paymentsRepository.findByMollieId(id);
+  }
+
   private async fetchMolliePayment(molliePaymentId: string) {
+    this.logger.log('Fetching Mollie payment status', { molliePaymentId });
     const response = await axios.get(`https://api.mollie.com/v2/payments/${molliePaymentId}`, {
       headers: {
         Authorization: `Bearer ${this.mollieApiKey}`,

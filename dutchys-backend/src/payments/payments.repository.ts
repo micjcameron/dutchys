@@ -18,6 +18,10 @@ export class PaymentsRepository {
     return this.repository.save(payment);
   }
 
+  findById(id: string): Promise<Payment | null> {
+    return this.repository.findOne({ where: { id } });
+  }
+
   findByMollieId(molliePaymentId: string): Promise<Payment | null> {
     return this.repository.findOne({ where: { molliePaymentId } });
   }

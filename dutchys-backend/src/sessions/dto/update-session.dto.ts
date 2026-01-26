@@ -1,4 +1,5 @@
-import { IsInt, IsObject, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsObject, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { ProductType } from '../../common/product-type.enum';
 
 export class UpdateSessionDto {
   @IsOptional()
@@ -14,4 +15,8 @@ export class UpdateSessionDto {
   @IsOptional()
   @IsUUID()
   cartId?: string;
+
+  @IsOptional()
+  @IsEnum(ProductType)
+  productType?: ProductType;
 }
