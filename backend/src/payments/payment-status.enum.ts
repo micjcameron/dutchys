@@ -1,0 +1,9 @@
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  FAILED = 'FAILED',
+  CANCELED = 'CANCELED',
+  EXPIRED = 'EXPIRED',
+  OPEN = 'OPEN',
+  AUTHORIZED = 'AUTHORIZED',
+}

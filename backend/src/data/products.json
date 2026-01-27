@@ -1,0 +1,247 @@
+[
+  {
+    "id": "cold-plunge",
+    "name": "Cold plunge",
+    "description": "Compacte cold plunge voor dagelijks herstel en wellness.",
+    "shape": "Round",
+    "size": "120cm",
+    "internalSize": "100cm",
+    "externalSize": "120cm",
+    "persons": "1-2",
+    "priceIncl": 1089,
+    "priceExcl": 900,
+    "image": "/placeholders/product-cold-plunge.png",
+    "details": [],
+    "features": [
+      "Snel herstel na training",
+      "Compact formaat",
+      "Temperatuurregeling 4-12°C"
+    ],
+    "delivery": "2-4 weken",
+    "inStock": true,
+    "rating": 4.6,
+    "reviewCount": 12,
+    "productType": "COLD_PLUNGE"
+  },
+  {
+    "id": "sauna-4p",
+    "name": "Sauna 4-persoons",
+    "description": "Moderne buitensauna met glasfront, geschikt voor 2-4 personen.",
+    "shape": "Rectangle",
+    "size": "220x200cm",
+    "internalSize": "200x180cm",
+    "externalSize": "220x200cm",
+    "persons": "2-4",
+    "priceIncl": 3146,
+    "priceExcl": 2600,
+    "image": "/placeholders/product-sauna.png",
+    "details": [
+      "/placeholders/product-details-1.png",
+      "/placeholders/product-details-2.png"
+    ],
+    "features": [
+      "Thermische isolatie voor snelle opwarming",
+      "Volledig glazen voorzijde",
+      "Geschikt voor hout, elektrisch of hybride",
+      "Inclusief ergonomische banken",
+      "Afmeting: 220x200cm"
+    ],
+    "delivery": "3-5 weken",
+    "inStock": true,
+    "rating": 4.4,
+    "reviewCount": 6,
+    "productType": "SAUNA"
+  },
+  {
+    "id": "ofuro",
+    "name": "Ofuro",
+    "description": "Traditionele Japanse zitkuip, pure wellness.",
+    "shape": "Ofuro",
+    "size": "120x190cm",
+    "internalSize": "100x170cm",
+    "externalSize": "120x190cm",
+    "persons": "1-2",
+    "priceIncl": 1250,
+    "priceExcl": 1033.06,
+    "image": "/placeholders/product-6.png",
+    "details": [
+      "/placeholders/product-details-1.png",
+      "/placeholders/product-details-2.png",
+      "/placeholders/product-details-3.png"
+    ],
+    "features": [
+      "Gemaakt van duurzaam hout",
+      "Verwarmingssysteem: houtgestookt",
+      "Capaciteit: 1-2 personen",
+      "Afmeting: 120x190cm",
+      "Hoogte: 100 cm",
+      "Inclusief isolerend deksel",
+      "Eenvoudige installatie"
+    ],
+    "delivery": "2-4 weken",
+    "inStock": true,
+    "rating": 4.1,
+    "reviewCount": 7,
+    "productType": "HOTTUB"
+  },
+  {
+    "id": "round-200",
+    "name": "Rond 200",
+    "description": "Compacte ronde hottub, ideaal voor kleine tuinen.",
+    "shape": "Round",
+    "size": "200cm",
+    "internalSize": "180cm",
+    "externalSize": "200cm",
+    "persons": "2-4",
+    "priceIncl": 1350,
+    "priceExcl": 1115.7,
+    "image": "/placeholders/product-1.png",
+    "details": [
+      "/placeholders/product-details-1.png",
+      "/placeholders/product-details-2.png",
+      "/placeholders/product-details-3.png"
+    ],
+    "features": [
+      "Gemaakt van duurzaam hout",
+      "Verwarmingssysteem: houtgestookt",
+      "Capaciteit: 2-4 personen",
+      "Diameter: 200cm ø",
+      "Hoogte: 100 cm",
+      "Inclusief isolerend deksel",
+      "Eenvoudige installatie"
+    ],
+    "delivery": "2-4 weken",
+    "inStock": true,
+    "rating": 4.7,
+    "reviewCount": 18,
+    "productType": "HOTTUB"
+  },
+  {
+    "id": "round-225",
+    "name": "Rond 225",
+    "description": "Extra ruime ronde hottub voor het hele gezin.",
+    "shape": "Round",
+    "size": "225cm",
+    "internalSize": "200cm",
+    "externalSize": "225cm",
+    "persons": "4-6",
+    "priceIncl": 1850,
+    "priceExcl": 1528.93,
+    "image": "/placeholders/product-2.png",
+    "details": [
+      "/placeholders/product-details-1.png",
+      "/placeholders/product-details-2.png",
+      "/placeholders/product-details-3.png"
+    ],
+    "features": [
+      "Gemaakt van duurzaam hout",
+      "Verwarmingssysteem: elektrisch",
+      "Capaciteit: 4-6 personen",
+      "Diameter: 225cm ø",
+      "Hoogte: 100 cm",
+      "Inclusief isolerend deksel",
+      "Eenvoudige installatie"
+    ],
+    "delivery": "2-4 weken",
+    "inStock": true,
+    "rating": 4.2,
+    "reviewCount": 9,
+    "productType": "HOTTUB"
+  },
+  {
+    "id": "square-200",
+    "name": "Vierkant 200",
+    "description": "Compacte vierkante hottub, snel op temperatuur.",
+    "shape": "Square",
+    "size": "200x200cm",
+    "internalSize": "180x180cm",
+    "externalSize": "200x200cm",
+    "persons": "2-4",
+    "priceIncl": 1750,
+    "priceExcl": 1446.28,
+    "image": "/placeholders/product-3.png",
+    "details": [
+      "/placeholders/product-details-1.png",
+      "/placeholders/product-details-2.png",
+      "/placeholders/product-details-3.png"
+    ],
+    "features": [
+      "Gemaakt van duurzaam hout",
+      "Verwarmingssysteem: houtgestookt",
+      "Capaciteit: 2-4 personen",
+      "Afmeting: 200x200cm",
+      "Hoogte: 100 cm",
+      "Inclusief isolerend deksel",
+      "Eenvoudige installatie"
+    ],
+    "delivery": "2-4 weken",
+    "inStock": true,
+    "rating": 4.9,
+    "reviewCount": 27,
+    "productType": "HOTTUB"
+  },
+  {
+    "id": "square-220",
+    "name": "Vierkant 220",
+    "description": "Ruime vierkante hottub voor 4-6 personen.",
+    "shape": "Square",
+    "size": "220x220cm",
+    "internalSize": "200x200cm",
+    "externalSize": "220x220cm",
+    "persons": "4-6",
+    "priceIncl": 2200,
+    "priceExcl": 1818.18,
+    "image": "/placeholders/product-4.png",
+    "details": [
+      "/placeholders/product-details-1.png",
+      "/placeholders/product-details-2.png",
+      "/placeholders/product-details-3.png"
+    ],
+    "features": [
+      "Gemaakt van duurzaam hout",
+      "Verwarmingssysteem: hybride",
+      "Capaciteit: 4-6 personen",
+      "Afmeting: 220x220cm",
+      "Hoogte: 100 cm",
+      "Inclusief isolerend deksel",
+      "Eenvoudige installatie"
+    ],
+    "delivery": "2-4 weken",
+    "inStock": true,
+    "rating": 3.9,
+    "reviewCount": 4,
+    "productType": "HOTTUB"
+  },
+  {
+    "id": "square-245",
+    "name": "Vierkant 245",
+    "description": "Grote vierkante hottub, ideaal voor groepen.",
+    "shape": "Square",
+    "size": "245x245cm",
+    "internalSize": "225x225cm",
+    "externalSize": "245x245cm",
+    "persons": "6-8",
+    "priceIncl": 2800,
+    "priceExcl": 2314.05,
+    "image": "/placeholders/product-5.png",
+    "details": [
+      "/placeholders/product-details-1.png",
+      "/placeholders/product-details-2.png",
+      "/placeholders/product-details-3.png"
+    ],
+    "features": [
+      "Gemaakt van duurzaam hout",
+      "Verwarmingssysteem: elektrisch",
+      "Capaciteit: 6-8 personen",
+      "Afmeting: 245x245cm",
+      "Hoogte: 100 cm",
+      "Inclusief isolerend deksel",
+      "Eenvoudige installatie"
+    ],
+    "delivery": "2-4 weken",
+    "inStock": true,
+    "rating": 4.5,
+    "reviewCount": 31,
+    "productType": "HOTTUB"
+  }
+]

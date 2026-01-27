@@ -1,0 +1,246 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DeepPartial, Repository } from 'typeorm';
+import { isUUID } from 'class-validator';
+import { ProductType } from '../common/product-type.enum';
+import { SelectionInput } from './engine/evaluateConfiguration';
+import { evaluateTemplate } from './engine/evaluateTemplate';
+import { getTemplateForProductType } from './templates/templates';
+import { BaseProductEntity } from './entities/base-product.entity';
+import { OptionEntity } from './entities/option.entity';
+import { OptionGroupEntity } from './entities/option-group.entity';
+import { RuleEntity, RuleScope } from './entities/rule.entity';
+
+const CACHE_TTL_MS = 60_000;
+
+type CatalogSnapshot = {
+  baseProducts: BaseProductEntity[];
+  optionGroups: OptionGroupEntity[];
+  options: OptionEntity[];
+  rules: RuleEntity[];
+};
+
+@Injectable()
+export class CatalogService {
+  private cache = new Map<string, { expiresAt: number; data: CatalogSnapshot }>();
+
+  constructor(
+    @InjectRepository(BaseProductEntity)
+    private readonly baseProductsRepository: Repository<BaseProductEntity>,
+    @InjectRepository(OptionGroupEntity)
+    private readonly optionGroupsRepository: Repository<OptionGroupEntity>,
+    @InjectRepository(OptionEntity)
+    private readonly optionsRepository: Repository<OptionEntity>,
+    @InjectRepository(RuleEntity)
+    private readonly rulesRepository: Repository<RuleEntity>,
+  ) {}
+
+  private async getCatalogSnapshot(type?: ProductType): Promise<CatalogSnapshot> {
+    const cacheKey = type ?? 'all';
+    const cached = this.cache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data;
+    }
+
+    const [baseProducts, optionGroups, options, rules] = await Promise.all([
+      this.baseProductsRepository.find({
+        where: {
+          isActive: true,
+          ...(type ? { type } : {}),
+        },
+      }),
+      this.optionGroupsRepository.find({ where: { isActive: true } }),
+      this.optionsRepository.find({ where: { isActive: true } }),
+      this.rulesRepository.find({ where: { isActive: true } }),
+    ]);
+
+    const snapshot = { baseProducts, optionGroups, options, rules };
+    this.cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, data: snapshot });
+    return snapshot;
+  }
+
+  private filterGroupsByType(groups: OptionGroupEntity[], type?: ProductType) {
+    if (!type) {
+      return groups;
+    }
+    return groups.filter((group) =>
+      Array.isArray(group.productTypes) && group.productTypes.length > 0
+        ? group.productTypes.includes(type)
+        : true,
+    );
+  }
+
+  private filterRulesForContext(
+    rules: RuleEntity[],
+    context: { product?: BaseProductEntity; groupKeys?: Set<string> },
+  ) {
+    const { product, groupKeys } = context;
+    return rules.filter((rule) => {
+      if (!rule.isActive) {
+        return false;
+      }
+      if (rule.scope === RuleScope.GLOBAL) {
+        return true;
+      }
+      if (rule.scope === RuleScope.PRODUCT_TYPE) {
+        return !!product && rule.scopeRef === product.type;
+      }
+      if (rule.scope === RuleScope.PRODUCT) {
+        return !!product && rule.scopeRef === product.id;
+      }
+      if (rule.scope === RuleScope.GROUP) {
+        return !!groupKeys && !!rule.scopeRef && groupKeys.has(rule.scopeRef);
+      }
+      return false;
+    });
+  }
+
+  async getPublicCatalog(type?: ProductType) {
+    const snapshot = await this.getCatalogSnapshot(type);
+    const optionGroups = this.filterGroupsByType(snapshot.optionGroups, type);
+    const groupKeys = new Set(optionGroups.map((group) => group.key));
+    const options = snapshot.options.filter((option) => groupKeys.has(option.groupKey));
+    const rules = type
+      ? this.filterRulesForContext(snapshot.rules, { product: { type } as BaseProductEntity, groupKeys })
+      : snapshot.rules;
+
+    return {
+      baseProducts: snapshot.baseProducts,
+      optionGroups,
+      options,
+      rules,
+    };
+  }
+
+  async getPublicTemplate(type: ProductType) {
+    const template = getTemplateForProductType(type);
+    if (!template) {
+      throw new NotFoundException('Template not found');
+    }
+    return template;
+  }
+
+  async getPublicProductIds(type?: ProductType) {
+    const products = await this.baseProductsRepository.find({
+      select: ['id', 'slug'],
+      where: {
+        isActive: true,
+        ...(type ? { type } : {}),
+      },
+    });
+    return products.map((product) => ({ id: product.id, slug: product.slug }));
+  }
+
+  async getPublicProductById(id: string) {
+    const product = isUUID(id)
+      ? await this.baseProductsRepository.findOne({
+          where: { id, isActive: true },
+        })
+      : await this.baseProductsRepository.findOne({
+          where: { slug: id, isActive: true },
+        });
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    return product;
+  }
+
+  async evaluateConfiguration(productId: string, selections: SelectionInput) {
+    const product = await this.baseProductsRepository.findOne({
+      where: { id: productId, isActive: true },
+    });
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    const snapshot = await this.getCatalogSnapshot(product.type);
+    const optionGroups = this.filterGroupsByType(snapshot.optionGroups, product.type);
+    const groupKeys = new Set(optionGroups.map((group) => group.key));
+    const options = snapshot.options.filter((option) => groupKeys.has(option.groupKey));
+    const rules = this.filterRulesForContext(snapshot.rules, { product, groupKeys });
+
+    const template = getTemplateForProductType(product.type);
+    if (!template) {
+      throw new NotFoundException('Template not found');
+    }
+
+    return evaluateTemplate({
+      product,
+      selections: selections as any,
+      template,
+      catalog: { groups: optionGroups, options },
+    });
+  }
+
+  async listBaseProducts() {
+    return this.baseProductsRepository.find();
+  }
+
+  async createBaseProduct(data: Partial<BaseProductEntity>) {
+    return this.baseProductsRepository.save(this.baseProductsRepository.create(data));
+  }
+
+  async updateBaseProduct(id: string, data: Partial<BaseProductEntity>) {
+    await this.baseProductsRepository.save({ id, ...(data as DeepPartial<BaseProductEntity>) });
+    return this.baseProductsRepository.findOne({ where: { id } });
+  }
+
+  async deleteBaseProduct(id: string) {
+    await this.baseProductsRepository.delete(id);
+    return { id };
+  }
+
+  async listOptionGroups() {
+    return this.optionGroupsRepository.find();
+  }
+
+  async createOptionGroup(data: Partial<OptionGroupEntity>) {
+    return this.optionGroupsRepository.save(this.optionGroupsRepository.create(data));
+  }
+
+  async updateOptionGroup(id: string, data: Partial<OptionGroupEntity>) {
+    await this.optionGroupsRepository.update(id, data);
+    return this.optionGroupsRepository.findOne({ where: { id } });
+  }
+
+  async deleteOptionGroup(id: string) {
+    await this.optionGroupsRepository.delete(id);
+    return { id };
+  }
+
+  async listOptions() {
+    return this.optionsRepository.find();
+  }
+
+  async createOption(data: Partial<OptionEntity>) {
+    return this.optionsRepository.save(this.optionsRepository.create(data));
+  }
+
+  async updateOption(id: string, data: Partial<OptionEntity>) {
+    await this.optionsRepository.save({ id, ...(data as DeepPartial<OptionEntity>) });
+    return this.optionsRepository.findOne({ where: { id } });
+  }
+
+  async deleteOption(id: string) {
+    await this.optionsRepository.delete(id);
+    return { id };
+  }
+
+  async listRules() {
+    return this.rulesRepository.find();
+  }
+
+  async createRule(data: Partial<RuleEntity>) {
+    return this.rulesRepository.save(this.rulesRepository.create(data));
+  }
+
+  async updateRule(id: string, data: Partial<RuleEntity>) {
+    await this.rulesRepository.save({ id, ...(data as DeepPartial<RuleEntity>) });
+    return this.rulesRepository.findOne({ where: { id } });
+  }
+
+  async deleteRule(id: string) {
+    await this.rulesRepository.delete(id);
+    return { id };
+  }
+}
