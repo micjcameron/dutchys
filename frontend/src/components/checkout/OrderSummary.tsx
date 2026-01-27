@@ -36,7 +36,7 @@ export default function OrderSummary({ entries, subtotalIncl, subtotalExcl, vatT
         </div>
         <div className="flex justify-between">
           <span>Levering</span>
-          <span>Gratis</span>
+          <span>Wordt later berekend</span>
         </div>
       </div>
       <div className="border-t pt-4 mt-4 flex justify-between text-lg font-semibold text-brand-blue">

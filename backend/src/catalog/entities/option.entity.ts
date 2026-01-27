@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { OptionGroupEntity } from './option-group.entity';
+import { ProductType } from './base-product.entity';
 
 const numericTransformer = {
   to: (value?: number | null) =>
@@ -58,6 +59,12 @@ export class OptionEntity {
   @Column({ type: 'jsonb', default: {} })
   attributes!: Record<string, unknown>;
 
+  @Column({ type: 'jsonb', default: {} })
+  appliesTo!: OptionAppliesTo;
+
+  @Column({ type: 'jsonb', nullable: true })
+  quantityRule!: OptionQuantityRule | null;
+
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;
 
@@ -77,4 +84,15 @@ export type OptionColorVariant = {
   images?: string[];
   sortOrder?: number;
   isActive?: boolean;
+};
+
+export type OptionAppliesTo = {
+  productModelKeys?: string[];
+  productTypes?: ProductType[];
+};
+
+export type OptionQuantityRule = {
+  min: number;
+  max: number;
+  step?: number;
 };

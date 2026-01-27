@@ -26,6 +26,8 @@ const Footer = () => {
             <ul className="space-y-2 flex flex-col items-center md:items-start text-base">
               <li><Link href="/" className="text-gray-300 hover:text-white">Home</Link></li>
               <li><Link href="/hottubs" className="text-gray-300 hover:text-white">Hottubs</Link></li>
+              <li><Link href="/saunas" className="text-gray-300 hover:text-white">Sauna's</Link></li>
+              <li><Link href="/cold-plunge" className="text-gray-300 hover:text-white">Cold Plunge</Link></li>
               <li><Link href="/configurator" className="text-gray-300 hover:text-white">Configurator</Link></li>
               <li><Link href="/about" className="text-gray-300 hover:text-white">Over Ons</Link></li>
               <li><Link href="/contact" className="text-gray-300 hover:text-white">Contact</Link></li>

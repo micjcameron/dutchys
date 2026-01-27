@@ -45,10 +45,10 @@ const Hero = () => {
                   src="/assets/images/hero-background.jpg" 
                 />
                 
-                {/* Overlay badges - Mobile optimized */}
+                {/* Overlay badges - Mobile optimized
                 <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 shadow-md text-xs font-medium">
                   20+ modellen beschikbaar
-                </div>
+                </div> */}
                 
                 <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 shadow-md text-xs font-medium whitespace-nowrap">
                   Brede keuze in materialen en extra's
@@ -85,12 +85,6 @@ const Hero = () => {
                   <span className="text-xs">⏱</span>
                 </span>
                 <span>Vind jouw match in <span className="text-brand-orange font-medium">2 minuten</span></span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100">
-                  <Truck className="w-3 h-3" />
-                </span>
-                <span>Inclusief <span className="text-brand-orange font-medium">gratis</span> levering aan huis</span>
               </div>
             </div>
 
@@ -202,12 +196,6 @@ const Hero = () => {
                   </span>
                   <span>Vind jouw match in <span className="text-brand-orange font-medium">2 minuten</span></span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100">
-                    <Truck className="w-3 h-3" />
-                  </span>
-                  <span>Inclusief <span className="text-brand-orange font-medium">gratis</span> levering aan huis</span>
-                </div>
               </div>
             </div>
             
@@ -221,9 +209,9 @@ const Hero = () => {
                 />
                 
                 {/* Overlay badges */}
-                <div className="absolute top-8 left-8 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md text-sm font-medium">
+                {/* <div className="absolute top-8 left-8 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md text-sm font-medium">
                   20+ modellen beschikbaar
-                </div>
+                </div> */}
                 
                 <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md text-sm font-medium whitespace-nowrap">
                   Brede keuze in materialen en extra's

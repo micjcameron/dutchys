@@ -82,7 +82,7 @@ export default function CartPage() {
     let isMounted = true;
     const loadProducts = async () => {
       try {
-        const catalog = await fetchCatalog('hottub');
+        const catalog = await fetchCatalog();
         const list = (catalog.baseProducts ?? []).map((product: any) => ({
           id: product.id,
           name: product.name,

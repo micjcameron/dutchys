@@ -10,6 +10,11 @@ const collectionData = {
     description: 'Ontdek onze collectie hoogwaardige hottubs. Of je nu op zoek bent naar een klassieke houten hottub of een moderne variant met jets, wij hebben voor elke wens de perfecte oplossing.',
     image: '/placeholders/collection-1.png'
   },
+  saunas: {
+    title: "Sauna's",
+    description: 'Ontdek onze sauna\'s voor thuis en buiten. Kies uit verschillende houtsoorten, verwarmingsopties en afmetingen voor jouw ideale wellness-ervaring.',
+    image: '/placeholders/collection-2.png'
+  },
   inbouwsaunas: {
     title: 'Inbouwsauna\'s',
     description: 'Onze inbouwsauna\'s worden op maat gemaakt voor jouw ruimte. Kies uit verschillende houtsoorten, verwarmingstechnieken en extra opties voor jouw perfecte thuissauna.',
@@ -28,6 +33,11 @@ const collectionData = {
   ijsbad: {
     title: 'IJsbaden',
     description: 'Onze ijsbaden zijn perfect voor een verfrissende duik na de sauna. Ze helpen bij spierontspanning, bevorderen de bloedsomloop en verhogen je weerstand.',
+    image: '/placeholders/collection-5.png'
+  },
+  'cold-plunge': {
+    title: 'Cold Plunge',
+    description: 'Verfrissende cold plunge baden voor herstel, focus en dagelijkse wellness.',
     image: '/placeholders/collection-5.png'
   }
 };

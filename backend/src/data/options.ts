@@ -1,6 +1,7 @@
 import {
   CatalogOptionSeed,
   ColorEnum,
+  CoolerType,
   ExtraCategory,
   FiltrationRole,
   FiltrationType,
@@ -8,6 +9,7 @@ import {
   HeatingPlacement,
   HeatingSize,
   HeatingType,
+  HeaterInstallationType,
   LedType,
   LidColor,
   LidMaterial,
@@ -20,8 +22,115 @@ import {
   StairsType,
   ControlUnitType,
 } from '../modules/catalog/types/catalog-option-seed.types';
+import { ProductType } from '../catalog/entities/base-product.entity';
 
 export const catalogOptions: CatalogOptionSeed[] = [
+  {
+    groupKey: OptionGroupKey.COOLER_BASE,
+    key: "ICE-TUB-CHILLER-ECO",
+    name: "Ice Tub Chiller Eco",
+    description:
+      "Ontdek de Ice Tub Chiller Model Economic: krachtige koeling, eenvoudige bediening en direct uit voorraad leverbaar. Ideaal voor jouw Ice Tub met 1 PK vermogen en 2500 W koelcapaciteit. Koop nu voor optimale prestaties en voordelige prijzen!",
+    priceExcl: 0,
+    vatRatePercent: 21,
+    images: [],
+    tags: [
+      OptionTag.COOLER
+    ],
+    attributes: {
+      type: CoolerType.CHILLER,
+      power: "1 PK",
+      coolingCapacity: "2500 W"
+    },
+    appliesTo: {
+      productTypes: [
+        ProductType.COLD_PLUNGE
+      ]
+    },
+    isActive: true
+  },
+  {
+    groupKey: OptionGroupKey.HEATER_INSTALLATION,
+    key: "HEATER-INSTALL-EXTERNAL",
+    name: "Externe kachelinstallatie",
+    description: "Externe kachelinstallatie voor het gekozen model",
+    priceExcl: 0,
+    vatRatePercent: 21,
+    images: [],
+    tags: [],
+    appliesTo: {
+      productModelKeys: [
+        "HOTTUB_ROUND_200",
+        "HOTTUB_ROUND_225",
+        "HOTTUB_SQUARE_200",
+        "HOTTUB_SQUARE_220",
+        "HOTTUB_OFURO_120_190"
+      ]
+    },
+    attributes: {
+      type: HeaterInstallationType.EXTERNAL
+    },
+    isActive: true
+  },
+  {
+    groupKey: OptionGroupKey.HEATER_INSTALLATION,
+    key: "HEATER-INSTALL-INTEGRATED",
+    name: "Geïntegreerde kachelinstallatie",
+    description: "Geïntegreerde kachelinstallatie voor het gekozen model",
+    priceExcl: 165.29,
+    vatRatePercent: 21,
+    images: [],
+    tags: [],
+    appliesTo: {
+      productModelKeys: [
+        "HOTTUB_ROUND_200",
+        "HOTTUB_ROUND_225",
+        "HOTTUB_SQUARE_200"
+      ]
+    },
+    attributes: {
+      type: HeaterInstallationType.INTEGRATED
+    },
+    isActive: true
+  },
+  {
+    groupKey: OptionGroupKey.HEATER_INSTALLATION,
+    key: "HEATER-INSTALL-INTEGRATED-220",
+    name: "Geïntegreerde kachelinstallatie",
+    description: "Geïntegreerde kachelinstallatie voor het gekozen model",
+    priceExcl: -165.29,
+    vatRatePercent: 21,
+    images: [],
+    tags: [],
+    appliesTo: {
+      productModelKeys: [
+        "HOTTUB_SQUARE_220"
+      ]
+    },
+    attributes: {
+      type: HeaterInstallationType.INTEGRATED
+    },
+    isActive: true
+  },
+  {
+    groupKey: OptionGroupKey.HEATER_INSTALLATION,
+    key: "HEATER-INSTALL-INTEGRATED-245",
+    name: "Geïntegreerde kachelinstallatie",
+    description: "Geïntegreerde kachelinstallatie voor het gekozen model",
+    priceExcl: 0,
+    vatRatePercent: 21,
+    images: [],
+    tags: [],
+    appliesTo: {
+      productModelKeys: [
+        "HOTTUB_SQUARE_245"
+      ]
+    },
+    attributes: {
+      type: HeaterInstallationType.INTEGRATED
+    },
+    isActive: true
+  },
   {
     groupKey: OptionGroupKey.HEATING_BASE,
     key: "WOOD-INTERNAL-SMALL",
@@ -1154,7 +1263,7 @@ export const catalogOptions: CatalogOptionSeed[] = [
     ],
     attributes: {
       type: FiltrationType.CONNECTION,
-      role: FiltrationRole.MAIN,
+      role: FiltrationRole.ADDON,
       required: true
     },
     isActive: true

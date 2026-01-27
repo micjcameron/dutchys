@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Users, Ruler, Square, Circle, Eclipse, Flame, Zap, Sparkles, RotateCcw } from 'lucide-react';
+import { Users, Ruler, RotateCcw } from 'lucide-react';
 
 const FILTERS = [
   {
@@ -25,45 +25,18 @@ const FILTERS = [
     options: ['rond', 'vierkant', 'ofuro'],
     grid: 'grid-cols-3',
   },
-  {
-    key: 'verwarming',
-    label: 'Verwarmingsmethode',
-    icon: null, // Per optie bepaald
-    options: ['houtgestookt', 'elektrisch', 'hybride'],
-    grid: 'grid-cols-3',
-  },
 ];
-
-const iconMap = {
-  rond: <Circle className="w-4 h-4 mr-1 text-brand-blue" />, // vorm
-  vierkant: <Square className="w-4 h-4 mr-1 text-brand-blue" />, // vorm
-  ofuro: <Eclipse className="w-4 h-4 mr-1 text-brand-blue" />, // vorm (Eclipse as oval stand-in)
-  personen: <Users className="w-4 h-4 mr-1 text-brand-blue" />,
-  ruler: <Ruler className="w-4 h-4 mr-1 text-brand-blue" />,
-  diameter: <span className="mr-1 text-base font-bold text-brand-blue">ø</span>,
-  houtgestookt: <Flame className="w-4 h-4 mr-1 text-brand-orange" />,
-  elektrisch: <Zap className="w-4 h-4 mr-1 text-brand-blue" />,
-  hybride: <><Flame className="w-4 h-4 mr-0.5 text-brand-orange" /><Zap className="w-4 h-4 ml-0.5 text-brand-blue" /></>,
-};
-
-const heatingIconMap = {
-  houtgestookt: <Flame className="w-4 h-4 mr-1 text-brand-orange" />,
-  elektrisch: <Zap className="w-4 h-4 mr-1 text-brand-blue" />,
-  hybride: <><Flame className="w-4 h-4 mr-0.5 text-brand-orange" /><Zap className="w-4 h-4 ml-0.5 text-brand-blue" /></>,
-};
 
 interface CollectionFiltersProps {
   filters: {
     personen: string[];
     formaat: string[];
     vorm: string[];
-    verwarming: string[];
   };
   onFiltersChange?: (filters: {
     personen: string[];
     formaat: string[];
     vorm: string[];
-    verwarming: string[];
   }) => void;
 }
 
@@ -82,7 +55,7 @@ export default function CollectionFilters({ filters, onFiltersChange }: Collecti
   }
 
   function resetFilters() {
-    const newSelected = { personen: [], formaat: [], vorm: [], verwarming: [] };
+    const newSelected = { personen: [], formaat: [], vorm: [] };
     onFiltersChange?.(newSelected);
   }
 
@@ -107,10 +80,6 @@ export default function CollectionFilters({ filters, onFiltersChange }: Collecti
       } else {
         icon = <Ruler className={`w-4 h-4 mr-1 ${isSelected ? 'text-white' : 'text-brand-blue'}`} />;
       }
-    } else if (group === 'verwarming') {
-      if (option === 'houtgestookt') icon = <Flame className={`w-4 h-4 mr-1 bg-brand-orange/10 rounded-full p-0.5 ${isSelected ? 'text-white' : 'text-brand-orange'}`} />;
-      if (option === 'elektrisch') icon = <Zap className={`w-4 h-4 mr-1 bg-yellow-500/10 rounded-full p-0.5 ${isSelected ? 'text-white' : 'text-yellow-500'}`} />;
-      if (option === 'hybride') icon = <Sparkles className={`w-4 h-4 mr-1 bg-brand-blue/10 rounded-full p-0.5 ${isSelected ? 'text-white' : 'text-brand-blue'}`} />;
     }
     return (
       <button

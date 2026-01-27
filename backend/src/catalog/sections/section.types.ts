@@ -3,6 +3,12 @@ import { OptionGroupEntity } from '../entities/option-group.entity';
 
 export type ConfigSelections = {
   baseProductId?: string | null;
+  answers?: {
+    hideFilterUnderStairs?: boolean | null;
+  };
+  touchedKeys?: string[];
+  heaterInstallation?: { optionId?: string | null };
+  cooler?: { optionId?: string | null };
   heating?: { optionId?: string | null; extras?: string[] };
   materials?: {
     internalMaterialId?: string | null;
@@ -42,6 +48,8 @@ export type CatalogOption = {
   images?: string[];
   tags?: string[];
   attributes?: Record<string, unknown>;
+  appliesTo?: Record<string, unknown>;
+  quantityRule?: Record<string, unknown> | null;
 };
 
 export type SectionResult = {

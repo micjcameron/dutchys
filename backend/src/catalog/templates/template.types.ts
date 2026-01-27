@@ -2,6 +2,8 @@ import { ProductType } from '../entities/base-product.entity';
 
 export type SectionKey =
   | 'BASE'
+  | 'COOLER'
+  | 'HEATER_INSTALLATION'
   | 'HEATING'
   | 'MATERIALS'
   | 'INSULATION'

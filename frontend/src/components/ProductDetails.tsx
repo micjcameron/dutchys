@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { Truck, Shield, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navbar from './Navbar';
@@ -41,7 +42,10 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
         ? 'coldPlunge'
         : 'hottub';
 
-  const images = useMemo(() => (details.length > 0 ? details : ['/placeholders/product-1.png']), [details]);
+  const images = useMemo(() => {
+    const unique = Array.from(new Set(details.filter(Boolean)));
+    return unique.length > 0 ? unique : ['/placeholders/product-1.png'];
+  }, [details]);
   const [mainImage, setMainImage] = useState(images[0]);
   const [addedToCart, setAddedToCart] = useState(false);
 
@@ -58,10 +62,13 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
               <div>
                 <div className="mb-4 overflow-hidden rounded-2xl shadow-lg">
-                  <img
+                  <Image
                     src={mainImage}
                     alt={product.name}
+                    width={1200}
+                    height={800}
                     className="w-full h-[400px] object-cover"
+                    priority
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-4">
@@ -71,9 +78,11 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
                       className={`cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 ${image === mainImage ? 'border-brand-orange shadow-md' : 'border-transparent hover:border-brand-orange/50'}`}
                       onClick={() => setMainImage(image)}
                     >
-                      <img
+                      <Image
                         src={image}
                         alt={`${product.name} view ${index + 1}`}
+                        width={240}
+                        height={160}
                         className="w-full h-24 object-cover"
                       />
                     </div>
@@ -132,7 +141,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
                     <Truck className="h-5 w-5 text-brand-blue mr-3" />
                     <div>
                       <p className="font-medium">Levering: {delivery}</p>
-                      <p className="text-sm text-gray-500">Gratis verzending binnen Nederland</p>
+                      <p className="text-sm text-gray-500">Levering kies je later tijdens het afrekenen.</p>
                     </div>
                   </div>
                   <div className="flex items-center">

@@ -27,6 +27,8 @@ import type {
   TemplateStep,
 } from '@/types/catalog';
 import BaseSection from './sections/BaseSection';
+import CoolerSection from './sections/CoolerSection';
+import HeaterInstallationSection from './sections/HeaterInstallationSection';
 import HeatingSection from './sections/HeatingSection';
 import MaterialsSection from './sections/MaterialsSection';
 import InsulationSection from './sections/InsulationSection';
@@ -366,6 +368,30 @@ const ProductConfigurator: React.FC = () => {
             product={currentProduct}
             options={optionsByGroup.HEATING_BASE ?? []}
             extras={(optionsByGroup.EXTRAS_BASE ?? []).filter((option) => option.tags?.includes('HEATING-EXTRA'))}
+            selections={selections}
+            onSelectionsChange={setSelections}
+            evaluation={evaluation}
+            isCompany={isCompany}
+          />
+        );
+      case 'COOLER':
+        return (
+          <CoolerSection
+            title={currentStep.title}
+            description={currentStep.description}
+            options={optionsByGroup.COOLER_BASE ?? []}
+            selections={selections}
+            onSelectionsChange={setSelections}
+            evaluation={evaluation}
+            isCompany={isCompany}
+          />
+        );
+      case 'HEATER_INSTALLATION':
+        return (
+          <HeaterInstallationSection
+            title={currentStep.title}
+            description={currentStep.description}
+            options={optionsByGroup.HEATER_INSTALLATION ?? []}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}

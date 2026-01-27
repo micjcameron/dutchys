@@ -9,14 +9,22 @@ export type CatalogResponse = {
   rules: Array<Record<string, any>>;
 };
 
+type NextFetchInit = RequestInit & { next?: { revalidate?: number } };
+
+const withRevalidate = (init?: RequestInit): NextFetchInit | undefined => {
+  if (typeof window === 'undefined') {
+    return { ...(init ?? {}), next: { revalidate: 60 } };
+  }
+  return init;
+};
+
 export const fetchCatalog = async (type?: string, init?: RequestInit) => {
   const url = new URL(`${API_BASE_URL}/api/public/catalog`);
   if (type) {
     url.searchParams.set('type', type.toUpperCase());
   }
   const response = await fetch(url.toString(), {
-    next: { revalidate: 60 },
-    ...init,
+    ...(withRevalidate(init) ?? {}),
   });
   if (!response.ok) {
     throw new Error('Failed to load catalog');
@@ -28,8 +36,7 @@ export const fetchTemplate = async (type: string, init?: RequestInit) => {
   const url = new URL(`${API_BASE_URL}/api/public/catalog/template`);
   url.searchParams.set('type', type.toUpperCase());
   const response = await fetch(url.toString(), {
-    next: { revalidate: 60 },
-    ...init,
+    ...(withRevalidate(init) ?? {}),
   });
   if (!response.ok) {
     throw new Error('Failed to load template');

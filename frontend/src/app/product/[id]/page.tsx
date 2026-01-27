@@ -10,11 +10,14 @@ export async function generateStaticParams() {
     return [];
   }
   const data = await response.json();
-  const products = (data ?? []) as Array<{ id?: string }>;
-  return products
+  const products = (data ?? []) as Array<{ id?: string; slug?: string }>;
+  const ids = products
     .map((product) => product.id)
-    .filter((value): value is string => Boolean(value))
-    .map((id) => ({ id }));
+    .filter((value): value is string => Boolean(value));
+  const slugs = products
+    .map((product) => product.slug)
+    .filter((value): value is string => Boolean(value));
+  return Array.from(new Set([...ids, ...slugs])).map((id) => ({ id }));
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {

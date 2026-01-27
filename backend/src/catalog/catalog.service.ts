@@ -87,6 +87,8 @@ export class CatalogService {
         images: option.images,
         tags: option.tags,
         attributes: option.attributes,
+        appliesTo: option.appliesTo,
+        quantityRule: option.quantityRule,
         groupKey: groupKeyById.get(option.groupId!) as string,
         isActive: option.isActive,
       }));

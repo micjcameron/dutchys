@@ -13,7 +13,7 @@ type Filters = {
   vorm: string[];
 };
 
-export default function HottubsContent() {
+export default function ColdPlungeContent() {
   const [filters, setFilters] = useState<Filters>({
     personen: [],
     formaat: [],
@@ -33,7 +33,7 @@ export default function HottubsContent() {
       <Navbar />
       <main className="flex-grow">
         <div className="bg-gradient-to-b from-gray-100 to-white">
-          <CollectionHeader collectionType="hottubs" />
+          <CollectionHeader collectionType="cold-plunge" />
         </div>
         <div className="container mx-auto px-4 py-16">
           <div className="flex flex-col lg:flex-row gap-10">
@@ -46,7 +46,7 @@ export default function HottubsContent() {
             <div className="w-full lg:w-3/4">
               <ProductGrid
                 filters={filters}
-                productType="hottub"
+                productType="cold_plunge"
                 loading={false}
                 onResetFilters={resetFilters}
               />
@@ -57,4 +57,4 @@ export default function HottubsContent() {
       <Footer />
     </div>
   );
-} 
+}

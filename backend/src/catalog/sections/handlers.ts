@@ -27,6 +27,24 @@ export const baseSection: (context: SectionContext) => SectionResult = (context)
   return emptyResult(selections);
 };
 
+export const heaterInstallationSection = (context: SectionContext): SectionResult => {
+  const selections = { ...context.selections };
+  const option = getOption(context.options, selections.heaterInstallation?.optionId ?? null);
+  selections.heaterInstallation = {
+    optionId: option?.key ?? null,
+  };
+  return emptyResult(selections);
+};
+
+export const coolerSection = (context: SectionContext): SectionResult => {
+  const selections = { ...context.selections };
+  const option = getOption(context.options, selections.cooler?.optionId ?? null);
+  selections.cooler = {
+    optionId: option?.key ?? null,
+  };
+  return emptyResult(selections);
+};
+
 export const heatingSection = (context: SectionContext): SectionResult => {
   const selections = { ...context.selections };
   const heatingSelection = selections.heating ?? {};
@@ -147,38 +165,25 @@ export const filtrationSection = (context: SectionContext): SectionResult => {
     return option?.attributes?.type === 'UV' || option?.tags?.includes('UV');
   });
 
-  const result = emptyResult(selections);
-
-  const defaultConnection = filtrationOptions.find((option) => option.key === 'STAINLESS-SF-CONNECTIONS');
-  const nextConnections = connections.length === 0 && defaultConnection ? [defaultConnection.key] : connections;
-
-  const sandFilterSelected = filterOption?.key === 'SAND-FILTER';
-  const sandFilterBox = sandFilterSelected ? filtrationSelection.sandFilterBox ?? 'SAND-FILTER-BOX' : null;
-
   selections.filtration = {
-    connections: nextConnections,
+    connections,
     filterId: filterOption?.key ?? null,
     uv,
-    sandFilterBox,
+    sandFilterBox: filterOption?.key === 'SAND-FILTER' ? filtrationSelection.sandFilterBox ?? null : null,
   };
 
-  return { ...result, selections };
+  return emptyResult(selections);
 };
 
 export const sandFilterSection = (context: SectionContext): SectionResult => {
   const selections = { ...context.selections };
   const filtrationSelection = selections.filtration ?? {};
   const option = getOption(context.options, filtrationSelection.sandFilterBox ?? null);
-  const isSandFilter = filtrationSelection.filterId === 'SAND-FILTER';
-  const hiddenOptions: Record<string, { reason: string }> = {};
-  if (!isSandFilter) {
-    hiddenOptions['SAND-FILTER-BOX'] = { reason: 'Alleen beschikbaar bij zandfilter' };
-  }
   selections.filtration = {
     ...filtrationSelection,
-    sandFilterBox: isSandFilter ? option?.key ?? null : null,
+    sandFilterBox: option?.key ?? null,
   };
-  return { ...emptyResult(selections), hiddenOptions };
+  return emptyResult(selections);
 };
 
 export const stairsSection = (context: SectionContext): SectionResult => {

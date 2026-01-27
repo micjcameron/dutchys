@@ -3,7 +3,7 @@
 import { useState, useEffect, memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Settings, Home, Info, Phone, Mail, ShoppingBag } from 'lucide-react';
+import { Menu, Home, Info, Phone, Mail, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,7 +28,9 @@ const Navbar = memo(() => {
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
     { name: 'Hottubs', href: '/hottubs', icon: 'hottub' },
-    { name: 'Configurator', href: '/configurator', icon: Settings },
+    { name: "Sauna's", href: '/saunas', icon: 'sauna' },
+    { name: 'Cold Plunge', href: '/cold-plunge', icon: 'plunge' },
+    { name: 'Configurator', href: '/configurator', icon: 'configurator' },
     { name: 'Over Ons', href: '/about', icon: Info },
     { name: 'Contact', href: '/contact', icon: Phone },
   ];
@@ -38,8 +40,33 @@ const Navbar = memo(() => {
       const IconComponent = icon;
       return <IconComponent className="w-5 h-5 mr-2" />;
     }
-    if (icon === 'hottub') {
-      return <img src="/icons/hottub_icon_lightmode.png" alt="Hottubs" className="w-8 h-8 mr-2" />;
+    if (typeof icon === 'string') {
+      const iconMap: Record<string, { src: string; alt: string }> = {
+        hottub: { src: '/icons/hottub_icon_lightmode.png', alt: 'Hottubs' },
+        sauna: { src: '/icons/sauna_icon_lightmode.png', alt: "Sauna's" },
+        plunge: { src: '/icons/plunge_icon_lightmode.png', alt: 'Cold Plunge' },
+      };
+      if (icon === 'configurator') {
+        return (
+          <svg
+            className="w-6 h-6 mr-2"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.7 1.7 0 0 0 .33 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .31 1.7 1.7 0 0 0-.8 1.46V21a2 2 0 1 1-4 0v-.08a1.7 1.7 0 0 0-.8-1.46 1.7 1.7 0 0 0-1-.31 1.7 1.7 0 0 0-1.87.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.31-1 1.7 1.7 0 0 0-1.46-.8H3a2 2 0 1 1 0-4h.08a1.7 1.7 0 0 0 1.46-.8 1.7 1.7 0 0 0 .31-1 1.7 1.7 0 0 0-.33-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.31 1.7 1.7 0 0 0 .8-1.46V3a2 2 0 1 1 4 0v.08a1.7 1.7 0 0 0 .8 1.46 1.7 1.7 0 0 0 1 .31 1.7 1.7 0 0 0 1.87-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 .31 1 1.7 1.7 0 0 0 1.46.8H21a2 2 0 1 1 0 4h-.08a1.7 1.7 0 0 0-1.46.8 1.7 1.7 0 0 0-.06.2Z" />
+          </svg>
+        );
+      }
+      const iconData = iconMap[icon];
+      if (iconData) {
+        return <img src={iconData.src} alt={iconData.alt} className="w-8 h-8 mr-2" />;
+      }
     }
     return null;
   };

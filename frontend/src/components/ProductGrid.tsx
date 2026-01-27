@@ -18,7 +18,6 @@ interface Product {
   priceIncl: number;
   priceExcl: number;
   image?: string;
-  vatRatePercent?: number;
 }
 
 type SortOption = 'name' | 'price-low' | 'price-high' | 'personen';
@@ -35,23 +34,29 @@ interface ProductGridProps {
     personen: string[];
     formaat: string[];
     vorm: string[];
-    verwarming: string[];
   };
+  productType?: string;
   loading?: boolean;
   onResetFilters?: () => void;
 }
 
-export default function ProductGrid({ filters, loading = false, onResetFilters }: ProductGridProps) {
+export default function ProductGrid({
+  filters,
+  productType = 'hottub',
+  loading = false,
+  onResetFilters,
+}: ProductGridProps) {
   const [sortBy, setSortBy] = useState<SortOption>('name');
   const [products, setProducts] = useState<Product[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
+    setDataLoading(true);
 
     const loadProducts = async () => {
       try {
-        const catalog = await fetchCatalog('hottub');
+        const catalog = await fetchCatalog(productType);
         const list = (catalog.baseProducts ?? []).map((product: any) => ({
           id: product.id,
           name: product.name,
@@ -62,8 +67,9 @@ export default function ProductGrid({ filters, loading = false, onResetFilters }
           personsMax: product.attributes?.personsMax ?? null,
           heatingTypes: product.heatingTypes ?? null,
           priceExcl: product.basePriceExcl ?? 0,
-          vatRatePercent: product.vatRatePercent ?? 21,
-          priceIncl: (product.basePriceExcl ?? 0) * (1 + (product.vatRatePercent ?? 21) / 100),
+          priceIncl:
+            (product.basePriceExcl ?? 0) *
+            (1 + ((product.vatRatePercent ?? 21) / 100)),
           image: product.images?.[0] ?? product.image,
         })) as Product[];
         if (isMounted) {
@@ -83,7 +89,7 @@ export default function ProductGrid({ filters, loading = false, onResetFilters }
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [productType]);
 
   const hasActiveFilters = useMemo(
     () => Object.values(filters).some((filter) => filter.length > 0),
@@ -91,7 +97,7 @@ export default function ProductGrid({ filters, loading = false, onResetFilters }
   );
 
   const filteredProducts = useMemo(() => {
-    const { personen, formaat, vorm, verwarming } = filters;
+    const { personen, formaat, vorm } = filters;
     const normalizeSize = (value: string) =>
       value.toLowerCase().replace(/\s+/g, '').replace('ø', '');
     const normalizedFormaat = formaat.map(normalizeSize);
@@ -109,19 +115,8 @@ export default function ProductGrid({ filters, loading = false, onResetFilters }
       const shapeLabel =
         rawShape === 'round' ? 'rond' : rawShape === 'square' ? 'vierkant' : rawShape;
       const matchesVorm = vorm.length === 0 || (shapeLabel ? vorm.includes(shapeLabel) : false);
-      const heatingLabels = (product.heatingTypes ?? []).map((type) =>
-        type === 'WOOD'
-          ? 'houtgestookt'
-          : type === 'ELECTRIC'
-            ? 'elektrisch'
-            : type === 'HYBRID'
-              ? 'hybride'
-              : type,
-      );
-      const matchesVerwarming =
-        verwarming.length === 0 || heatingLabels.some((label) => verwarming.includes(label));
 
-      return matchesPersonen && matchesFormaat && matchesVorm && matchesVerwarming;
+      return matchesPersonen && matchesFormaat && matchesVorm;
     });
   }, [filters, products]);
 
@@ -234,6 +229,7 @@ export default function ProductGrid({ filters, loading = false, onResetFilters }
                   height={320}
                   className="w-full h-48 object-cover rounded-t-2xl"
                   loading="lazy"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                 />
               </div>
               <div className="p-6 flex flex-col h-full">

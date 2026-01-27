@@ -56,7 +56,7 @@ productsData.forEach((product) => {
       ? null
       : [HeatingType.WOOD, HeatingType.ELECTRIC, HeatingType.HYBRID];
   baseProductsSeed.push({
-    slug: slugify(product.name ?? String(product.id)),
+    slug: slugify(product.slug ?? product.key ?? product.name ?? String(product.id)),
     type: productType,
     shape: product.shape ? String(product.shape).toLowerCase() : null,
     name: product.name ?? 'Hottub',
@@ -72,6 +72,8 @@ productsData.forEach((product) => {
       personsMax,
       heating: product.verwarming ?? product.heating ?? null,
       features: product.features ?? [],
+      productKey: product.key ?? null,
+      ...(product.attributes ?? {}),
     },
     images: [product.image, ...(product.details ?? [])].filter(Boolean),
     isActive: true,
@@ -79,6 +81,36 @@ productsData.forEach((product) => {
 });
 
 const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
+  {
+    key: 'HEATER_INSTALLATION',
+    title: 'Kachel installatie',
+    selectionType: OptionGroupSelectionType.SINGLE,
+    min: 1,
+    max: 1,
+    sortOrder: 9,
+    productTypes: [ProductType.HOTTUB],
+    isActive: true,
+  },
+  {
+    key: 'COOLER_BASE',
+    title: 'Koeling',
+    selectionType: OptionGroupSelectionType.SINGLE,
+    min: null,
+    max: 1,
+    sortOrder: 9,
+    productTypes: [ProductType.COLD_PLUNGE],
+    isActive: true,
+  },
+  {
+    key: 'COOLER_ADD_ON',
+    title: "Koeling extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 10,
+    productTypes: [ProductType.COLD_PLUNGE],
+    isActive: true,
+  },
   {
     key: 'HEATING_BASE',
     title: 'Verwarming',

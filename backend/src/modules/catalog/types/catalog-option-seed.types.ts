@@ -1,6 +1,10 @@
 import type { OptionColorVariant } from '../../../catalog/entities/option.entity';
+import type { ProductType } from '../../../catalog/entities/base-product.entity';
 
 export enum OptionGroupKey {
+  HEATER_INSTALLATION = 'HEATER_INSTALLATION',
+  COOLER_BASE = 'COOLER_BASE',
+  COOLER_ADD_ON = 'COOLER_ADD_ON',
   HEATING_BASE = 'HEATING_BASE',
   EXTRAS_BASE = 'EXTRAS_BASE',
   MATERIALS_INTERNAL_BASE = 'MATERIALS-INTERNAL_BASE',
@@ -16,6 +20,7 @@ export enum OptionGroupKey {
 }
 
 export enum OptionTag {
+  COOLER = 'COOLER',
   WOOD = 'WOOD',
   HEATING_EXTRA = 'HEATING-EXTRA',
   ELECTRIC = 'ELECTRIC',
@@ -55,6 +60,15 @@ export enum HeatingType {
   WOOD = 'WOOD',
   ELECTRIC = 'ELECTRIC',
   HYBRID = 'HYBRID',
+}
+
+export enum HeaterInstallationType {
+  INTEGRATED = 'INTEGRATED',
+  EXTERNAL = 'EXTERNAL',
+}
+
+export enum CoolerType {
+  CHILLER = 'CHILLER',
 }
 
 export enum HeatingCategory {
@@ -179,7 +193,20 @@ type CatalogOptionBase = {
   vatRatePercent: number;
   images: string[];
   tags: OptionTag[];
+  appliesTo?: AppliesTo;
+  quantityRule?: QuantityRule;
   isActive: boolean;
+};
+
+export type AppliesTo = {
+  productModelKeys?: string[];
+  productTypes?: ProductType[];
+};
+
+export type QuantityRule = {
+  min: number;
+  max: number;
+  step?: number;
 };
 
 export type HeatingAttributes = {
@@ -193,6 +220,16 @@ export type HeatingAttributes = {
   pros: string[];
   cons: string[];
   extraOptionKeys: string[];
+};
+
+export type HeaterInstallationAttributes = {
+  type: HeaterInstallationType;
+};
+
+export type CoolerAttributes = {
+  type: CoolerType;
+  power?: string | null;
+  coolingCapacity?: string | null;
 };
 
 export type MaterialAttributes = {
@@ -257,6 +294,18 @@ export type SandFilterAttributes = {
 };
 
 export type CatalogOptionSeed =
+  | (CatalogOptionBase & {
+      groupKey: OptionGroupKey.COOLER_BASE;
+      attributes: CoolerAttributes;
+    })
+  | (CatalogOptionBase & {
+      groupKey: OptionGroupKey.COOLER_ADD_ON;
+      attributes: ExtraAttributes;
+    })
+  | (CatalogOptionBase & {
+      groupKey: OptionGroupKey.HEATER_INSTALLATION;
+      attributes: HeaterInstallationAttributes;
+    })
   | (CatalogOptionBase & {
       groupKey: OptionGroupKey.HEATING_BASE;
       attributes: HeatingAttributes;

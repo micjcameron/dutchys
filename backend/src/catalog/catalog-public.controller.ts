@@ -23,7 +23,28 @@ export class CatalogPublicController {
     if (!value) {
       return undefined;
     }
-    return value.toUpperCase() as ProductType;
+    const normalized = value
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '_')
+      .replace(/-/g, '_');
+    if (
+      normalized === 'COLDPLUNGE' ||
+      normalized === 'COLD_PLUNGE' ||
+      normalized === 'COOLER' ||
+      normalized === 'COOLERS' ||
+      normalized === 'ICEBATH' ||
+      normalized === 'ICE_BATH'
+    ) {
+      return ProductType.COLD_PLUNGE;
+    }
+    if (normalized === 'HOT_TUB' || normalized === 'HOTTUB') {
+      return ProductType.HOTTUB;
+    }
+    if (normalized === 'SAUNA' || normalized === 'SAUNAS') {
+      return ProductType.SAUNA;
+    }
+    return normalized as ProductType;
   }
 
   @Get()

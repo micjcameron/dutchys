@@ -17,6 +17,8 @@ export type CatalogOption = {
   images?: string[];
   tags?: string[];
   attributes?: Record<string, any>;
+  appliesTo?: Record<string, any>;
+  quantityRule?: Record<string, any> | null;
 };
 
 export type BaseProduct = {
@@ -34,6 +36,12 @@ export type BaseProduct = {
 
 export type ConfigSelections = {
   baseProductId?: string | null;
+  answers?: {
+    hideFilterUnderStairs?: boolean | null;
+  };
+  touchedKeys?: string[];
+  heaterInstallation?: { optionId?: string | null };
+  cooler?: { optionId?: string | null };
   heating?: { optionId?: string | null; extras?: string[] };
   materials?: {
     internalMaterialId?: string | null;
@@ -70,6 +78,8 @@ export type EvaluationResult = {
   hiddenOptions: Record<string, { reason: string }>;
   requirements: Array<{ key: string; message: string }>;
   validationErrors: string[];
+  recommendations?: Array<{ key: string; reason: string; strength?: 'low' | 'med' | 'high' }>;
+  warnings?: Array<{ message: string; key?: string }>;
   pricing: {
     totalExcl: number;
     totalIncl: number;
@@ -80,6 +90,8 @@ export type EvaluationResult = {
 
 export type SectionKey =
   | 'BASE'
+  | 'COOLER'
+  | 'HEATER_INSTALLATION'
   | 'HEATING'
   | 'MATERIALS'
   | 'INSULATION'

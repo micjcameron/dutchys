@@ -7,6 +7,12 @@ export const configuratorTemplates: ConfiguratorTemplate[] = [
     productTypes: [ProductType.HOTTUB],
     steps: [
       { id: 'BASE', section: 'BASE', title: 'Model', description: 'Kies uw basisproduct' },
+      {
+        id: 'HEATER_INSTALLATION',
+        section: 'HEATER_INSTALLATION',
+        title: 'Installatie',
+        description: 'Kies geïntegreerd of extern',
+      },
       { id: 'HEATING', section: 'HEATING', title: 'Verwarming', description: 'Kies uw verwarmingssysteem' },
       { id: 'MATERIALS', section: 'MATERIALS', title: 'Materialen', description: 'Kies interne en externe materialen' },
       { id: 'INSULATION', section: 'INSULATION', title: 'Isolatie', description: 'Kies uw isolatie' },
@@ -45,6 +51,7 @@ export const configuratorTemplates: ConfiguratorTemplate[] = [
     productTypes: [ProductType.COLD_PLUNGE],
     steps: [
       { id: 'BASE', section: 'BASE', title: 'Model', description: 'Kies uw basisproduct' },
+      { id: 'COOLER', section: 'COOLER', title: 'Koeling', description: 'Kies uw koeling' },
       { id: 'MATERIALS', section: 'MATERIALS', title: 'Materialen', description: 'Kies interne en externe materialen' },
       { id: 'INSULATION', section: 'INSULATION', title: 'Isolatie', description: 'Kies uw isolatie' },
       { id: 'LID', section: 'LID', title: 'Deksels', description: 'Kies uw deksel' },
