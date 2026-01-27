@@ -1,5 +1,5 @@
 import { IsEnum, IsInt, IsObject, IsOptional, IsUUID, Max, Min } from 'class-validator';
-import { ProductType } from '../../common/product-type.enum';
+import { ProductType } from '../../catalog/entities/base-product.entity';
 
 export class UpdateSessionDto {
   @IsOptional()

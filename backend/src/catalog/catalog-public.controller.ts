@@ -11,7 +11,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { createHash } from 'crypto';
-import { ProductType } from '../common/product-type.enum';
+import { ProductType } from './entities/base-product.entity';
 import { CatalogService } from './catalog.service';
 import { EvaluateCatalogDto } from './dto/evaluate-catalog.dto';
 

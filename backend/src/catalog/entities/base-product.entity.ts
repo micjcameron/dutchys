@@ -6,7 +6,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ProductType } from '../../common/product-type.enum';
 
 export enum HeatingType {
   WOOD = 'WOOD',
@@ -14,16 +13,30 @@ export enum HeatingType {
   HYBRID = 'HYBRID',
 }
 
+export enum ProductType {
+  HOTTUB = 'HOTTUB',
+  SAUNA = 'SAUNA',
+  COLD_PLUNGE = 'COLD_PLUNGE',
+}
+
 const numericTransformer = {
-  to: (value?: number | null) => (typeof value === 'number' ? value : value ?? null),
-  from: (value?: string | null) => (value === null || value === undefined ? null : Number(value)),
+  to: (value?: number | null) =>
+    typeof value === 'number' ? value : value ?? null,
+  from: (value?: string | null) =>
+    value === null || value === undefined ? null : Number(value),
 };
 
 @Entity({ name: 'base_products' })
+@Index(['type', 'isActive'])
 export class BaseProductEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  /**
+   * Slug is ideal for stable URLs:
+   * - /products/ofuro instead of /products/<uuid>
+   * - can keep public URLs stable even if DB ids change
+   */
   @Index({ unique: true })
   @Column({ type: 'varchar' })
   slug!: string;
@@ -46,8 +59,12 @@ export class BaseProductEntity {
   @Column({ type: 'numeric', precision: 12, scale: 2, transformer: numericTransformer })
   basePriceExcl!: number;
 
-  @Column({ type: 'numeric', precision: 5, scale: 4, transformer: numericTransformer })
-  vatRate!: number;
+  /**
+   * Store VAT as integer percent (e.g. 21) to match how humans think.
+   * Convert in code: vatMultiplier = vatRatePercent / 100
+   */
+  @Column({ type: 'smallint', default: 21 })
+  vatRatePercent!: number;
 
   @Column({ type: 'jsonb', default: {} })
   attributes!: Record<string, unknown>;

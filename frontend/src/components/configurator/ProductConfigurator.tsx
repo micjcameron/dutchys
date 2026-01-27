@@ -291,7 +291,8 @@ const ProductConfigurator: React.FC = () => {
       return isCompany ? evaluation.pricing.totalExcl : evaluation.pricing.totalIncl;
     }
     if (currentProduct) {
-      const priceIncl = currentProduct.basePriceExcl * (1 + currentProduct.vatRate);
+      const priceIncl =
+        currentProduct.basePriceExcl * (1 + (currentProduct.vatRatePercent ?? 21) / 100);
       return getDisplayPrice({ priceExcl: currentProduct.basePriceExcl, priceIncl }, isCompany);
     }
     return 0;
@@ -363,8 +364,8 @@ const ProductConfigurator: React.FC = () => {
             title={currentStep.title}
             description={currentStep.description}
             product={currentProduct}
-            options={optionsByGroup.HEATING ?? []}
-            extras={(optionsByGroup.EXTRAS ?? []).filter((option) => option.tags?.includes('HEATING-EXTRA'))}
+            options={optionsByGroup.HEATING_BASE ?? []}
+            extras={(optionsByGroup.EXTRAS_BASE ?? []).filter((option) => option.tags?.includes('HEATING-EXTRA'))}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}
@@ -376,8 +377,8 @@ const ProductConfigurator: React.FC = () => {
           <MaterialsSection
             title={currentStep.title}
             description={currentStep.description}
-            internalOptions={optionsByGroup['MATERIALS-INTERNAL'] ?? []}
-            externalOptions={optionsByGroup['MATERIALS-EXTERNAL'] ?? []}
+            internalOptions={optionsByGroup['MATERIALS-INTERNAL_BASE'] ?? []}
+            externalOptions={optionsByGroup['MATERIALS-EXTERNAL_BASE'] ?? []}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}
@@ -389,7 +390,7 @@ const ProductConfigurator: React.FC = () => {
           <InsulationSection
             title={currentStep.title}
             description={currentStep.description}
-            options={optionsByGroup.INSULATION ?? []}
+            options={optionsByGroup.INSULATION_BASE ?? []}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}
@@ -401,7 +402,7 @@ const ProductConfigurator: React.FC = () => {
           <SpaSection
             title={currentStep.title}
             description={currentStep.description}
-            options={optionsByGroup.SPASYSTEM ?? []}
+            options={optionsByGroup.SPASYSTEM_BASE ?? []}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}
@@ -413,7 +414,7 @@ const ProductConfigurator: React.FC = () => {
           <LedsSection
             title={currentStep.title}
             description={currentStep.description}
-            options={optionsByGroup.LEDS ?? []}
+            options={optionsByGroup.LEDS_BASE ?? []}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}
@@ -425,7 +426,7 @@ const ProductConfigurator: React.FC = () => {
           <LidSection
             title={currentStep.title}
             description={currentStep.description}
-            options={optionsByGroup.LID ?? []}
+            options={optionsByGroup.LID_BASE ?? []}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}
@@ -437,7 +438,7 @@ const ProductConfigurator: React.FC = () => {
           <FiltrationSection
             title={currentStep.title}
             description={currentStep.description}
-            options={optionsByGroup.FILTRATION ?? []}
+            options={optionsByGroup.FILTRATION_BASE ?? []}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}
@@ -449,7 +450,7 @@ const ProductConfigurator: React.FC = () => {
           <SandFilterSection
             title={currentStep.title}
             description={currentStep.description}
-            options={optionsByGroup.SANDFILTER ?? []}
+            options={optionsByGroup.SANDFILTER_BASE ?? []}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}
@@ -461,7 +462,7 @@ const ProductConfigurator: React.FC = () => {
           <StairsSection
             title={currentStep.title}
             description={currentStep.description}
-            options={optionsByGroup.STAIRS ?? []}
+            options={optionsByGroup.STAIRS_BASE ?? []}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}
@@ -473,7 +474,7 @@ const ProductConfigurator: React.FC = () => {
           <ControlUnitSection
             title={currentStep.title}
             description={currentStep.description}
-            options={optionsByGroup.CONTROLUNIT ?? []}
+            options={optionsByGroup.CONTROLUNIT_BASE ?? []}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}
@@ -485,7 +486,7 @@ const ProductConfigurator: React.FC = () => {
           <ExtrasSection
             title={currentStep.title}
             description={currentStep.description}
-            options={(optionsByGroup.EXTRAS ?? []).filter((option) => !option.tags?.includes('HEATING-EXTRA'))}
+            options={(optionsByGroup.EXTRAS_BASE ?? []).filter((option) => !option.tags?.includes('HEATING-EXTRA'))}
             selections={selections}
             onSelectionsChange={setSelections}
             evaluation={evaluation}

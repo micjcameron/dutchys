@@ -14,10 +14,11 @@ interface Product {
   size?: string | null;
   personsMin?: number | null;
   personsMax?: number | null;
-  heatingTypes?: string[];
+  heatingTypes?: string[] | null;
   priceIncl: number;
   priceExcl: number;
   image?: string;
+  vatRatePercent?: number;
 }
 
 type SortOption = 'name' | 'price-low' | 'price-high' | 'personen';
@@ -59,9 +60,10 @@ export default function ProductGrid({ filters, loading = false, onResetFilters }
           size: product.attributes?.size ?? null,
           personsMin: product.attributes?.personsMin ?? null,
           personsMax: product.attributes?.personsMax ?? null,
-          heatingTypes: product.heatingTypes ?? [],
+          heatingTypes: product.heatingTypes ?? null,
           priceExcl: product.basePriceExcl ?? 0,
-          priceIncl: (product.basePriceExcl ?? 0) * (1 + (product.vatRate ?? 0)),
+          vatRatePercent: product.vatRatePercent ?? 21,
+          priceIncl: (product.basePriceExcl ?? 0) * (1 + (product.vatRatePercent ?? 21) / 100),
           image: product.images?.[0] ?? product.image,
         })) as Product[];
         if (isMounted) {

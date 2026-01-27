@@ -10,7 +10,7 @@ type Product = {
   name: string;
   description: string;
   basePriceExcl?: number;
-  vatRate?: number;
+  vatRatePercent?: number;
   images?: string[];
   attributes?: Record<string, any>;
   type?: string;

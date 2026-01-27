@@ -35,7 +35,7 @@ type Product = {
   priceIncl: number;
   image?: string;
   attributes?: Record<string, any>;
-  heatingTypes?: string[];
+  heatingTypes?: string[] | null;
 };
 
 type CartEntry = {
@@ -89,10 +89,10 @@ export default function CartPage() {
           description: product.description,
           productType: product.type,
           priceExcl: product.basePriceExcl ?? 0,
-          priceIncl: (product.basePriceExcl ?? 0) * (1 + (product.vatRate ?? 0)),
+          priceIncl: (product.basePriceExcl ?? 0) * (1 + (product.vatRatePercent ?? 21) / 100),
           image: product.images?.[0] ?? product.image,
           attributes: product.attributes ?? {},
-          heatingTypes: product.heatingTypes ?? [],
+          heatingTypes: product.heatingTypes ?? null,
         })) as Product[];
         if (isMounted) {
           setProducts(list);

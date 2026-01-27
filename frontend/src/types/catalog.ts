@@ -13,7 +13,8 @@ export type CatalogOption = {
   name: string;
   description: string;
   priceExcl: number;
-  vatRate: number;
+  vatRatePercent: number;
+  images?: string[];
   tags?: string[];
   attributes?: Record<string, any>;
 };
@@ -25,7 +26,7 @@ export type BaseProduct = {
   type: string;
   shape?: string | null;
   basePriceExcl: number;
-  vatRate: number;
+  vatRatePercent: number;
   images?: string[];
   attributes?: Record<string, any>;
   heatingTypes?: string[] | null;
@@ -57,7 +58,7 @@ export type PriceItem = {
   key: string;
   name: string;
   priceExcl: number;
-  vatRate: number;
+  vatRatePercent: number;
   priceIncl: number;
   included?: boolean;
 };

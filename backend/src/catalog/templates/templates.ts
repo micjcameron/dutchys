@@ -1,4 +1,4 @@
-import { ProductType } from '../../common/product-type.enum';
+import { ProductType } from '../entities/base-product.entity';
 import { ConfiguratorTemplate } from './template.types';
 
 export const configuratorTemplates: ConfiguratorTemplate[] = [

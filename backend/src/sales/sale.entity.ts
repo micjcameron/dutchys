@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
-import { ProductType } from '../common/product-type.enum';
+import { ProductType } from '../catalog/entities/base-product.entity';
 
 @Entity('sales')
 export class Sale {

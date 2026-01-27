@@ -1,5 +1,4 @@
 import { BaseProductEntity } from '../entities/base-product.entity';
-import { OptionEntity } from '../entities/option.entity';
 import { OptionGroupEntity } from '../entities/option-group.entity';
 
 export type ConfigSelections = {
@@ -28,9 +27,21 @@ export type PriceItem = {
   key: string;
   name: string;
   priceExcl: number;
-  vatRate: number;
+  vatRatePercent: number;
   priceIncl: number;
   included?: boolean;
+};
+
+export type CatalogOption = {
+  key: string;
+  groupKey: string;
+  name: string;
+  description?: string | null;
+  priceExcl: number;
+  vatRatePercent: number;
+  images?: string[];
+  tags?: string[];
+  attributes?: Record<string, unknown>;
 };
 
 export type SectionResult = {
@@ -44,7 +55,7 @@ export type SectionResult = {
 
 export type SectionContext = {
   product: BaseProductEntity;
-  options: OptionEntity[];
+  options: CatalogOption[];
   groups: OptionGroupEntity[];
   selections: ConfigSelections;
 };

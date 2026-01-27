@@ -30,17 +30,20 @@ export const baseSection: (context: SectionContext) => SectionResult = (context)
 export const heatingSection = (context: SectionContext): SectionResult => {
   const selections = { ...context.selections };
   const heatingSelection = selections.heating ?? {};
-  const heatingOptions = filterOptionsByGroup(context.options, 'HEATING');
-  const allowedTags = (context.product.heatingTypes ?? []).map((type) => String(type).toUpperCase());
+  const heatingOptions = filterOptionsByGroup(context.options, 'HEATING_BASE');
+  const heatingTypes = context.product.heatingTypes;
+  const allowedTags = Array.isArray(heatingTypes)
+    ? heatingTypes.map((type) => String(type).toUpperCase())
+    : null;
   const availableHeatingOptions =
-    allowedTags.length === 0
+    !allowedTags || allowedTags.length === 0
       ? []
       : heatingOptions.filter((option) => option.tags?.some((tag) => allowedTags.includes(tag)));
 
   const selectedOption = availableHeatingOptions.find((option) => option.key === heatingSelection.optionId) ?? null;
 
   const extras = ensureArray(heatingSelection.extras);
-  const heatingExtras = filterOptionsByGroup(context.options, 'EXTRAS').filter((option) =>
+  const heatingExtras = filterOptionsByGroup(context.options, 'EXTRAS_BASE').filter((option) =>
     option.tags?.includes('HEATING-EXTRA'),
   );
   const extraOptionKeys = Array.isArray(selectedOption?.attributes?.extraOptionKeys)
@@ -56,7 +59,11 @@ export const heatingSection = (context: SectionContext): SectionResult => {
 
   const nextExtras = selectedOption ? validExtras : [];
   const disabledOptions: Record<string, { reason: string }> = {};
-  if (!selectedOption) {
+  if (!allowedTags) {
+    heatingOptions.forEach((option) => {
+      disabledOptions[option.key] = { reason: 'Verwarming niet van toepassing' };
+    });
+  } else if (!selectedOption) {
     heatingExtras.forEach((option) => {
       disabledOptions[option.key] = { reason: 'Selecteer eerst een verwarmingssysteem' };
     });
@@ -74,10 +81,10 @@ export const materialsSection = (context: SectionContext): SectionResult => {
   const selections = { ...context.selections };
   const materialSelection = selections.materials ?? {};
   const internal = context.options.find(
-    (option) => option.groupKey === 'MATERIALS-INTERNAL' && option.key === materialSelection.internalMaterialId,
+    (option) => option.groupKey === 'MATERIALS-INTERNAL_BASE' && option.key === materialSelection.internalMaterialId,
   );
   const external = context.options.find(
-    (option) => option.groupKey === 'MATERIALS-EXTERNAL' && option.key === materialSelection.externalMaterialId,
+    (option) => option.groupKey === 'MATERIALS-EXTERNAL_BASE' && option.key === materialSelection.externalMaterialId,
   );
 
   selections.materials = {
@@ -101,11 +108,11 @@ export const spaSection = (context: SectionContext): SectionResult => {
   const selections = { ...context.selections };
   const spaSelection = selections.spa ?? {};
   const systemOption = context.options.find(
-    (option) => option.groupKey === 'SPASYSTEM' && option.key === spaSelection.systemId,
+    (option) => option.groupKey === 'SPASYSTEM_BASE' && option.key === spaSelection.systemId,
   );
   const leds = ensureArray(spaSelection.leds).filter((key) => {
     const option = context.options.find((item) => item.key === key);
-    return option?.groupKey === 'LEDS';
+    return option?.groupKey === 'LEDS_BASE';
   });
 
   selections.spa = {
@@ -127,7 +134,7 @@ export const lidSection = (context: SectionContext): SectionResult => {
 export const filtrationSection = (context: SectionContext): SectionResult => {
   const selections = { ...context.selections };
   const filtrationSelection = selections.filtration ?? {};
-  const filtrationOptions = filterOptionsByGroup(context.options, 'FILTRATION');
+  const filtrationOptions = filterOptionsByGroup(context.options, 'FILTRATION_BASE');
 
   const connections = ensureArray(filtrationSelection.connections).filter((key) => {
     const option = getOption(filtrationOptions, key);
@@ -196,7 +203,7 @@ export const extrasSection = (context: SectionContext): SectionResult => {
   const selections = { ...context.selections };
   const extras = ensureArray(selections.extras?.optionIds).filter((key) => {
     const option = getOption(context.options, key);
-    return option?.groupKey === 'EXTRAS';
+    return option?.groupKey === 'EXTRAS_BASE';
   });
   selections.extras = { optionIds: extras };
   return emptyResult(selections);

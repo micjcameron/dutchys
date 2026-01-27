@@ -1,7 +1,6 @@
 import { BaseProductEntity } from '../entities/base-product.entity';
-import { OptionEntity } from '../entities/option.entity';
 import { OptionGroupEntity } from '../entities/option-group.entity';
-import { SectionContext, ConfigSelections, SectionResult, PriceItem } from '../sections/section.types';
+import { SectionContext, ConfigSelections, SectionResult, PriceItem, CatalogOption } from '../sections/section.types';
 import {
   baseSection,
   heatingSection,
@@ -56,7 +55,7 @@ const mergeSectionResults = (target: SectionResult, patch: SectionResult): Secti
   priceOverrides: { ...target.priceOverrides, ...patch.priceOverrides },
 });
 
-const getOptionMap = (options: OptionEntity[]) =>
+const getOptionMap = (options: CatalogOption[]) =>
   new Map(options.map((option) => [option.key, option]));
 
 const getSelectedOptionKeys = (selections: ConfigSelections) => {
@@ -103,7 +102,7 @@ const getSelectedOptionKeys = (selections: ConfigSelections) => {
 
 const applyGlobalConstraints = (
   selections: ConfigSelections,
-  options: OptionEntity[],
+  options: CatalogOption[],
   disabledOptions: Record<string, { reason: string }>,
   priceOverrides: Record<string, number>,
 ) => {
@@ -136,7 +135,7 @@ const applyGlobalConstraints = (
       selections.extras = { optionIds: filteredExtras };
     }
     options
-      .filter((option) => option.groupKey === 'EXTRAS' && option.key.startsWith('CUPHOLDER'))
+      .filter((option) => option.groupKey === 'EXTRAS_BASE' && option.key.startsWith('CUPHOLDER'))
       .forEach((option) => {
         disabledOptions[option.key] = { reason: 'Niet beschikbaar met zandfilterbox' };
       });
@@ -147,7 +146,7 @@ export const evaluateTemplate = (params: {
   product: BaseProductEntity;
   selections: ConfigSelections;
   template: ConfiguratorTemplate;
-  catalog: { options: OptionEntity[]; groups: OptionGroupEntity[] };
+  catalog: { options: CatalogOption[]; groups: OptionGroupEntity[] };
 }): EvaluationResult => {
   const { product, selections, template, catalog } = params;
   const baseResult: SectionResult = {
@@ -181,15 +180,15 @@ export const evaluateTemplate = (params: {
   const optionMap = getOptionMap(catalog.options);
   const breakdown: PriceItem[] = [];
   const basePriceExcl = product.basePriceExcl ?? 0;
-  const baseVatRate = product.vatRate ?? 0;
-  const basePriceIncl = basePriceExcl * (1 + baseVatRate);
+  const baseVatRatePercent = product.vatRatePercent ?? 0;
+  const basePriceIncl = basePriceExcl * (1 + baseVatRatePercent / 100);
 
   breakdown.push({
     type: 'base',
     key: product.id,
     name: product.name,
     priceExcl: basePriceExcl,
-    vatRate: baseVatRate,
+    vatRatePercent: baseVatRatePercent,
     priceIncl: basePriceIncl,
   });
 
@@ -204,14 +203,14 @@ export const evaluateTemplate = (params: {
     }
     const override = resolved.priceOverrides[key];
     const priceExcl = typeof override === 'number' ? override : option.priceExcl ?? 0;
-    const vatRate = option.vatRate ?? baseVatRate;
-    const priceIncl = priceExcl * (1 + vatRate);
+    const vatRatePercent = option.vatRatePercent ?? baseVatRatePercent;
+    const priceIncl = priceExcl * (1 + vatRatePercent / 100);
     breakdown.push({
       type: 'option',
       key,
       name: option.name,
       priceExcl,
-      vatRate,
+      vatRatePercent,
       priceIncl,
       included: typeof override === 'number' && override === 0 ? true : undefined,
     });

@@ -5,19 +5,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { config } from 'dotenv';
 import { AppModule } from '../src/app.module';
-import { ProductType } from '../src/common/product-type.enum';
-import { allHeatingOptions } from '../../frontend/src/data/heatingOptions';
-import { allMaterials } from '../../frontend/src/data/saunaMaterials';
-import { allOptions } from '../../frontend/src/data/saunaOptions';
-import { BaseProductEntity, HeatingType } from '../src/catalog/entities/base-product.entity';
+import { catalogOptions } from '../src/data/options';
+import { BaseProductEntity, HeatingType, ProductType } from '../src/catalog/entities/base-product.entity';
 import { OptionEntity } from '../src/catalog/entities/option.entity';
 import { OptionGroupEntity, OptionGroupSelectionType } from '../src/catalog/entities/option-group.entity';
 
 config();
 
-const VAT_RATE_DEFAULT = 0.21;
-
-const toUpper = (value?: string | null) => (typeof value === 'string' ? value.toUpperCase() : value);
+const VAT_RATE_DEFAULT_PERCENT = 21;
 
 const slugify = (value: string) =>
   value
@@ -45,13 +40,6 @@ type SeedBaseProduct = Partial<BaseProductEntity> & {
   images?: string[];
 };
 
-type SeedOption = Partial<OptionEntity> & {
-  key: string;
-  attributes?: Record<string, unknown>;
-  tags?: string[];
-};
-
-
 const baseProductsSeed: SeedBaseProduct[] = [];
 
 productsData.forEach((product) => {
@@ -65,7 +53,7 @@ productsData.forEach((product) => {
         : ProductType.HOTTUB;
   const heatingTypes =
     productType === ProductType.COLD_PLUNGE
-      ? []
+      ? null
       : [HeatingType.WOOD, HeatingType.ELECTRIC, HeatingType.HYBRID];
   baseProductsSeed.push({
     slug: slugify(product.name ?? String(product.id)),
@@ -75,7 +63,7 @@ productsData.forEach((product) => {
     description: product.description ?? 'Hottub configuratie',
     heatingTypes,
     basePriceExcl: Number(product.priceExcl ?? 0),
-    vatRate: VAT_RATE_DEFAULT,
+    vatRatePercent: VAT_RATE_DEFAULT_PERCENT,
     attributes: {
       size: product.size,
       internalSize: product.internalSize,
@@ -92,7 +80,7 @@ productsData.forEach((product) => {
 
 const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
   {
-    key: 'HEATING',
+    key: 'HEATING_BASE',
     title: 'Verwarming',
     selectionType: OptionGroupSelectionType.SINGLE,
     min: null,
@@ -102,7 +90,37 @@ const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
     isActive: true,
   },
   {
-    key: 'MATERIALS-INTERNAL',
+    key: 'HEATING_ADDONS',
+    title: "Verwarming extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null, 
+    sortOrder: 11,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA],
+    isActive: true,
+  },
+  {
+    key: 'COOLING_BASE',
+    title: 'Koeling',
+    selectionType: OptionGroupSelectionType.SINGLE,
+    min: null,
+    max: 1,
+    sortOrder: 12,
+    productTypes: [ProductType.COLD_PLUNGE],
+    isActive: true,
+  },
+  {
+    key: 'COOLING_ADDONS',
+    title: "Koeling extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 13,
+    productTypes: [ProductType.COLD_PLUNGE],
+    isActive: true,
+  },
+  {
+    key: 'MATERIALS-INTERNAL_BASE',
     title: 'Interne materialen',
     selectionType: OptionGroupSelectionType.SINGLE,
     min: null,
@@ -112,7 +130,17 @@ const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
     isActive: true,
   },
   {
-    key: 'MATERIALS-EXTERNAL',
+    key: 'MATERIALS-INTERNAL_ADDONS',
+    title: "Interne materialen extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 21,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA, ProductType.COLD_PLUNGE],
+    isActive: true,
+  },
+  {
+    key: 'MATERIALS-EXTERNAL_BASE',
     title: 'Externe materialen',
     selectionType: OptionGroupSelectionType.SINGLE,
     min: null,
@@ -122,7 +150,17 @@ const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
     isActive: true,
   },
   {
-    key: 'INSULATION',
+    key: 'MATERIALS-EXTERNAL_ADDONS',
+    title: "Externe materialen extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 31,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA, ProductType.COLD_PLUNGE],
+    isActive: true,
+  },
+  {
+    key: 'INSULATION_BASE',
     title: 'Isolatie',
     selectionType: OptionGroupSelectionType.SINGLE,
     min: null,
@@ -132,7 +170,17 @@ const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
     isActive: true,
   },
   {
-    key: 'SPASYSTEM',
+    key: 'INSULATION_ADDONS',
+    title: "Isolatie extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 41,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA, ProductType.COLD_PLUNGE],
+    isActive: true,
+  },
+  {
+    key: 'SPASYSTEM_BASE',
     title: 'Spa systemen',
     selectionType: OptionGroupSelectionType.SINGLE,
     min: null,
@@ -142,7 +190,17 @@ const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
     isActive: true,
   },
   {
-    key: 'LEDS',
+    key: 'SPASYSTEM_ADDONS',
+    title: "Spa systemen extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 51,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA],
+    isActive: true,
+  },
+  {
+    key: 'LEDS_BASE',
     title: 'LED-verlichting',
     selectionType: OptionGroupSelectionType.MULTI,
     min: null,
@@ -152,7 +210,17 @@ const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
     isActive: true,
   },
   {
-    key: 'LID',
+    key: 'LEDS_ADDONS',
+    title: "LED-verlichting extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 61,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA],
+    isActive: true,
+  },
+  {
+    key: 'LID_BASE',
     title: 'Deksels',
     selectionType: OptionGroupSelectionType.SINGLE,
     min: null,
@@ -162,17 +230,37 @@ const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
     isActive: true,
   },
   {
-    key: 'FILTRATION',
-    title: 'Filtratie',
+    key: 'LID_ADDONS',
+    title: "Deksels extra's",
     selectionType: OptionGroupSelectionType.MULTI,
     min: null,
     max: null,
+    sortOrder: 71,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA, ProductType.COLD_PLUNGE],
+    isActive: true,
+  },
+  {
+    key: 'FILTRATION_BASE',
+    title: 'Filtratie',
+    selectionType: OptionGroupSelectionType.SINGLE,
+    min: null,
+    max: 1,
     sortOrder: 80,
     productTypes: [ProductType.HOTTUB, ProductType.SAUNA],
     isActive: true,
   },
   {
-    key: 'SANDFILTER',
+    key: 'FILTRATION_ADDONS',
+    title: "Filtratie extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 81,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA],
+    isActive: true,
+  },
+  {
+    key: 'SANDFILTER_BASE',
     title: 'Zandfilter box',
     selectionType: OptionGroupSelectionType.SINGLE,
     min: null,
@@ -182,7 +270,17 @@ const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
     isActive: true,
   },
   {
-    key: 'STAIRS',
+    key: 'SANDFILTER_ADDONS',
+    title: "Zandfilter box extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 91,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA],
+    isActive: true,
+  },
+  {
+    key: 'STAIRS_BASE',
     title: 'Trappen',
     selectionType: OptionGroupSelectionType.SINGLE,
     min: null,
@@ -192,7 +290,17 @@ const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
     isActive: true,
   },
   {
-    key: 'CONTROLUNIT',
+    key: 'STAIRS_ADDONS',
+    title: "Trappen extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 101,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA, ProductType.COLD_PLUNGE],
+    isActive: true,
+  },
+  {
+    key: 'CONTROLUNIT_BASE',
     title: 'Bediening',
     selectionType: OptionGroupSelectionType.SINGLE,
     min: null,
@@ -202,7 +310,17 @@ const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
     isActive: true,
   },
   {
-    key: 'EXTRAS',
+    key: 'CONTROLUNIT_ADDONS',
+    title: "Bediening extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 111,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA],
+    isActive: true,
+  },
+  {
+    key: 'EXTRAS_BASE',
     title: 'Extra opties',
     selectionType: OptionGroupSelectionType.MULTI,
     min: null,
@@ -211,273 +329,17 @@ const optionGroupsSeed: Partial<OptionGroupEntity>[] = [
     productTypes: [ProductType.HOTTUB, ProductType.SAUNA, ProductType.COLD_PLUNGE],
     isActive: true,
   },
-];
-
-const optionsByKey = new Map<string, SeedOption>();
-
-const upsertOption = (option: SeedOption) => {
-  if (!option.key) {
-    return;
-  }
-  optionsByKey.set(option.key, option);
-};
-
-allHeatingOptions.forEach((option) => {
-  upsertOption({
-    groupKey: 'HEATING',
-    key: toUpper(option.id) as string,
-    name: option.name,
-    description: option.description,
-    priceExcl: option.priceExcl,
-    vatRate: VAT_RATE_DEFAULT,
-    tags: [toUpper(option.type) as string],
-    attributes: {
-      type: toUpper(option.type),
-      category: toUpper(option.category),
-      heatingTime: option.heatingTime,
-      power: option.power,
-      voltage: option.voltage,
-      placement: (option as any).placement ?? null,
-      size: (option as any).size ?? null,
-      pros: option.pros,
-      cons: option.cons,
-      image: option.image,
-      extraOptionKeys: ((option as any).extraOptions ?? []).map((extra: Record<string, any>) =>
-        toUpper(extra.id),
-      ),
-    },
+  {
+    key: 'EXTRAS_ADDONS',
+    title: "Extra opties extra's",
+    selectionType: OptionGroupSelectionType.MULTI,
+    min: null,
+    max: null,
+    sortOrder: 121,
+    productTypes: [ProductType.HOTTUB, ProductType.SAUNA, ProductType.COLD_PLUNGE],
     isActive: true,
-  });
-
-  const extraOptions = (option as any).extraOptions as Array<Record<string, any>> | undefined;
-  if (extraOptions && extraOptions.length > 0) {
-    extraOptions.forEach((extra) => {
-      upsertOption({
-        groupKey: 'EXTRAS',
-        key: toUpper(extra.id) as string,
-        name: extra.name,
-        description: extra.description,
-        priceExcl: extra.priceExcl,
-        vatRate: VAT_RATE_DEFAULT,
-        tags: ['HEATING-EXTRA'],
-        attributes: {
-          source: 'heating',
-        },
-        isActive: true,
-      });
-    });
-  }
-});
-
-allMaterials.internal.forEach((material) => {
-  upsertOption({
-    groupKey: 'MATERIALS-INTERNAL',
-    key: toUpper(material.id) as string,
-    name: material.name,
-    description: material.description,
-    priceExcl: material.priceExcl,
-    vatRate: VAT_RATE_DEFAULT,
-    tags: ['INTERNAL'],
-    attributes: {
-      colors: material.colors.map((color) => {
-        const { priceIncl: _priceIncl, ...rest } = color;
-        return {
-          ...rest,
-          id: toUpper(color.id),
-          priceExcl: color.priceExcl,
-          vatRate: VAT_RATE_DEFAULT,
-        };
-      }),
-      pros: material.pros,
-      cons: material.cons,
-      image: material.image,
-    },
-    isActive: true,
-  });
-});
-
-allMaterials.external.forEach((material) => {
-  upsertOption({
-    groupKey: 'MATERIALS-EXTERNAL',
-    key: toUpper(material.id) as string,
-    name: material.name,
-    description: material.description,
-    priceExcl: material.priceExcl,
-    vatRate: VAT_RATE_DEFAULT,
-    tags: ['EXTERNAL'],
-    attributes: {
-      colors: material.colors.map((color) => {
-        const { priceIncl: _priceIncl, ...rest } = color;
-        return {
-          ...rest,
-          id: toUpper(color.id),
-          priceExcl: color.priceExcl,
-          vatRate: VAT_RATE_DEFAULT,
-        };
-      }),
-      pros: material.pros,
-      cons: material.cons,
-      image: material.image,
-    },
-    isActive: true,
-  });
-});
-
-allMaterials.insulation.forEach((insulation) => {
-  upsertOption({
-    groupKey: 'INSULATION',
-    key: toUpper(insulation.id) as string,
-    name: insulation.name,
-    description: insulation.description,
-    priceExcl: insulation.priceExcl,
-    vatRate: VAT_RATE_DEFAULT,
-    tags: ['INSULATION'],
-    attributes: {
-      pros: insulation.pros,
-      cons: insulation.cons,
-    },
-    isActive: true,
-  });
-});
-
-allOptions.spaSystems.forEach((option) => {
-  upsertOption({
-    groupKey: 'SPASYSTEM',
-    key: toUpper(option.id) as string,
-    name: option.name,
-    description: option.description,
-    priceExcl: option.priceExcl,
-    vatRate: VAT_RATE_DEFAULT,
-    tags: ['SPA', toUpper(option.type) as string],
-    attributes: {
-      type: toUpper(option.type),
-      power: option.power ?? null,
-      nozzles: option.nozzles ?? null,
-      included: option.included ?? false,
-    },
-    isActive: true,
-  });
-});
-
-allOptions.ledOptions.forEach((option) => {
-  upsertOption({
-    groupKey: 'LEDS',
-    key: toUpper(option.id) as string,
-    name: option.name,
-    description: option.description,
-    priceExcl: option.priceExcl,
-    vatRate: VAT_RATE_DEFAULT,
-    tags: ['LED', toUpper(option.type) as string],
-    attributes: {
-      type: toUpper(option.type),
-      count: option.count ?? null,
-      size: option.size ?? null,
-    },
-    isActive: true,
-  });
-});
-
-allOptions.filtrationOptions.forEach((option) => {
-  upsertOption({
-    groupKey: 'FILTRATION',
-    key: toUpper(option.id) as string,
-    name: option.name,
-    description: option.description,
-    priceExcl: option.priceExcl,
-    vatRate: VAT_RATE_DEFAULT,
-    tags: ['FILTRATION', toUpper(option.type) as string],
-    attributes: {
-      type: toUpper(option.type),
-      required: option.required ?? false,
-    },
-    isActive: true,
-  });
-});
-
-allOptions.controlUnits.forEach((option) => {
-  upsertOption({
-    groupKey: 'CONTROLUNIT',
-    key: toUpper(option.id) as string,
-    name: option.name,
-    description: option.description,
-    priceExcl: option.priceExcl,
-    vatRate: VAT_RATE_DEFAULT,
-    tags: ['CONTROL', toUpper(option.type) as string],
-    attributes: {
-      type: toUpper(option.type),
-      wifi: option.wifi ?? null,
-    },
-    isActive: true,
-  });
-});
-
-allOptions.lidOptions.forEach((option) => {
-  upsertOption({
-    groupKey: 'LID',
-    key: toUpper(option.id) as string,
-    name: option.name,
-    description: option.description,
-    priceExcl: option.priceExcl,
-    vatRate: VAT_RATE_DEFAULT,
-    tags: ['LID', toUpper(option.type) as string],
-    attributes: {
-      type: toUpper(option.type),
-      material: option.material ?? null,
-      color: option.color ?? null,
-      inheritMaterial: option.inheritMaterial ?? false,
-    },
-    isActive: true,
-  });
-});
-
-allOptions.stairsOptions.forEach((option) => {
-  upsertOption({
-    groupKey: 'STAIRS',
-    key: toUpper(option.id) as string,
-    name: option.name,
-    description: option.description,
-    priceExcl: option.priceExcl,
-    vatRate: VAT_RATE_DEFAULT,
-    tags: option.coversSandFilter ? ['COVERS-SAND-FILTER'] : [],
-    attributes: {
-      type: toUpper(option.type),
-      material: option.material ?? null,
-      coversSandFilter: option.coversSandFilter ?? false,
-    },
-    isActive: true,
-  });
-});
-
-allOptions.extraOptions.forEach((option) => {
-  upsertOption({
-    groupKey: 'EXTRAS',
-    key: toUpper(option.id) as string,
-    name: option.name,
-    description: option.description,
-    priceExcl: option.priceExcl,
-    vatRate: VAT_RATE_DEFAULT,
-    tags: [toUpper(option.category) as string],
-    attributes: {
-      category: toUpper(option.category),
-      required: option.required ?? false,
-    },
-    isActive: true,
-  });
-});
-
-upsertOption({
-  groupKey: 'SANDFILTER',
-  key: 'SAND-FILTER-BOX',
-  name: 'Zandfilter Box',
-  description: 'Zandfilter in bijpassende box',
-  priceExcl: 82.64,
-  vatRate: VAT_RATE_DEFAULT,
-  tags: ['SAND-FILTER-BOX'],
-  attributes: {
-    inheritsExternalColor: true,
   },
-  isActive: true,
-});
+];
 
 export const seedProducts = async (dataSource: DataSource) => {
   const logger = new Logger('SeedProducts');
@@ -486,21 +348,31 @@ export const seedProducts = async (dataSource: DataSource) => {
   const optionGroupRepo = dataSource.getRepository(OptionGroupEntity);
   const optionRepo = dataSource.getRepository(OptionEntity);
 
-  logger.log('Seeding base products...');
-  await baseProductRepo.upsert(
-    baseProductsSeed as QueryDeepPartialEntity<BaseProductEntity>[],
-    ['slug'],
-  );
-
   logger.log('Seeding option groups...');
   await optionGroupRepo.upsert(
     optionGroupsSeed as QueryDeepPartialEntity<OptionGroupEntity>[],
     ['key'],
   );
 
+  logger.log('Seeding base products...');
+  await baseProductRepo.upsert(
+    baseProductsSeed as QueryDeepPartialEntity<BaseProductEntity>[],
+    ['slug'],
+  );
+
   logger.log('Seeding options...');
+  const groupIdByKey = new Map(
+    (await optionGroupRepo.find()).map((group) => [group.key, group.id]),
+  );
+  const optionsSeed = catalogOptions.map((option) => {
+    const { groupKey, ...rest } = option;
+    return {
+      ...rest,
+      groupId: groupKey ? groupIdByKey.get(groupKey) ?? null : null,
+    };
+  });
   await optionRepo.upsert(
-    Array.from(optionsByKey.values()) as QueryDeepPartialEntity<OptionEntity>[],
+    optionsSeed as QueryDeepPartialEntity<OptionEntity>[],
     ['key'],
   );
 

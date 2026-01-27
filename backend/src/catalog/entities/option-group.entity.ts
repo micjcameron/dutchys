@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ProductType } from '../../common/product-type.enum';
+import { ProductType } from './base-product.entity';
 
 export enum OptionGroupSelectionType {
   SINGLE = 'SINGLE',
@@ -15,6 +15,7 @@ export enum OptionGroupSelectionType {
 }
 
 @Entity({ name: 'option_groups' })
+@Index(['sortOrder', 'isActive'])
 export class OptionGroupEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -38,6 +39,10 @@ export class OptionGroupEntity {
   @Column({ type: 'int', default: 0 })
   sortOrder!: number;
 
+  /**
+   * This is fine as jsonb for now (fast + flexible).
+   * If later you want strict relational modeling, make a join table.
+   */
   @Column({ type: 'jsonb', default: [] })
   productTypes!: ProductType[];
 

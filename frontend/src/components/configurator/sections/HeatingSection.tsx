@@ -27,8 +27,11 @@ const HeatingSection = ({
   evaluation,
   isCompany,
 }: HeatingSectionProps) => {
-  const heatingTypes = (product?.heatingTypes ?? []).map((type) => String(type).toUpperCase());
-  const heatingOptions = heatingTypes.length > 0
+  const rawHeatingTypes = product?.heatingTypes;
+  const heatingTypes = Array.isArray(rawHeatingTypes)
+    ? rawHeatingTypes.map((type) => String(type).toUpperCase())
+    : null;
+  const heatingOptions = heatingTypes && heatingTypes.length > 0
     ? options.filter((option) => option.tags?.some((tag) => heatingTypes.includes(tag)))
     : [];
 
@@ -74,10 +77,13 @@ const HeatingSection = ({
 
   return (
     <SectionWrapper title={title} description={description}>
-      {heatingTypes.length === 0 && (
+      {heatingTypes === null && (
+        <div className="text-sm text-gray-500">Verwarming is niet van toepassing voor dit product.</div>
+      )}
+      {heatingTypes !== null && heatingTypes.length === 0 && (
         <div className="text-sm text-gray-500">Dit product heeft geen verwarmingsopties.</div>
       )}
-      {heatingTypes.length > 0 && (
+      {heatingTypes !== null && heatingTypes.length > 0 && (
         <OptionGrid
           options={heatingOptions}
           selectedKeys={selectedHeating ? [selectedHeating] : []}

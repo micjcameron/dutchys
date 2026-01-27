@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
-import { ProductType } from '../common/product-type.enum';
+import { ProductType } from './entities/base-product.entity';
 import { SelectionInput } from './engine/evaluateConfiguration';
 import { evaluateTemplate } from './engine/evaluateTemplate';
 import { getTemplateForProductType } from './templates/templates';
@@ -70,6 +70,28 @@ export class CatalogService {
     );
   }
 
+  private mapOptionsWithGroupKey(
+    options: OptionEntity[],
+    groups: OptionGroupEntity[],
+  ) {
+    const groupKeyById = new Map(groups.map((group) => [group.id, group.key]));
+    return options
+      .filter((option) => option.groupId && groupKeyById.has(option.groupId))
+      .map((option) => ({
+        id: option.id,
+        key: option.key,
+        name: option.name,
+        description: option.description,
+        priceExcl: option.priceExcl,
+        vatRatePercent: option.vatRatePercent,
+        images: option.images,
+        tags: option.tags,
+        attributes: option.attributes,
+        groupKey: groupKeyById.get(option.groupId!) as string,
+        isActive: option.isActive,
+      }));
+  }
+
   private filterRulesForContext(
     rules: RuleEntity[],
     context: { product?: BaseProductEntity; groupKeys?: Set<string> },
@@ -99,7 +121,11 @@ export class CatalogService {
     const snapshot = await this.getCatalogSnapshot(type);
     const optionGroups = this.filterGroupsByType(snapshot.optionGroups, type);
     const groupKeys = new Set(optionGroups.map((group) => group.key));
-    const options = snapshot.options.filter((option) => groupKeys.has(option.groupKey));
+    const groupIds = new Set(optionGroups.map((group) => group.id));
+    const options = this.mapOptionsWithGroupKey(
+      snapshot.options.filter((option) => option.groupId && groupIds.has(option.groupId)),
+      optionGroups,
+    );
     const rules = type
       ? this.filterRulesForContext(snapshot.rules, { product: { type } as BaseProductEntity, groupKeys })
       : snapshot.rules;
@@ -156,7 +182,11 @@ export class CatalogService {
     const snapshot = await this.getCatalogSnapshot(product.type);
     const optionGroups = this.filterGroupsByType(snapshot.optionGroups, product.type);
     const groupKeys = new Set(optionGroups.map((group) => group.key));
-    const options = snapshot.options.filter((option) => groupKeys.has(option.groupKey));
+    const groupIds = new Set(optionGroups.map((group) => group.id));
+    const options = this.mapOptionsWithGroupKey(
+      snapshot.options.filter((option) => option.groupId && groupIds.has(option.groupId)),
+      optionGroups,
+    );
     const rules = this.filterRulesForContext(snapshot.rules, { product, groupKeys });
 
     const template = getTemplateForProductType(product.type);

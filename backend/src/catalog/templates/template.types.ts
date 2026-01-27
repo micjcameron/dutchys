@@ -1,4 +1,4 @@
-import { ProductType } from '../../common/product-type.enum';
+import { ProductType } from '../entities/base-product.entity';
 
 export type SectionKey =
   | 'BASE'

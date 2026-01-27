@@ -13,7 +13,7 @@ type Product = {
   name: string;
   description: string;
   basePriceExcl?: number;
-  vatRate?: number;
+  vatRatePercent?: number;
   images?: string[];
   attributes?: Record<string, any>;
   type?: string;
@@ -28,8 +28,8 @@ interface ProductDetailsProps {
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
   const priceExcl = product.basePriceExcl ?? 0;
-  const vatRate = product.vatRate ?? 0.21;
-  const priceIncl = priceExcl * (1 + vatRate);
+  const vatRatePercent = product.vatRatePercent ?? 21;
+  const priceIncl = priceExcl * (1 + vatRatePercent / 100);
   const details = product.images?.length ? product.images : product.image ? [product.image] : [];
   const features = product.attributes?.features ?? [];
   const delivery = product.delivery ?? '2-4 weken';

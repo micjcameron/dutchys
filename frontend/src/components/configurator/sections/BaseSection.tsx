@@ -18,7 +18,7 @@ const BaseSection = ({ title, description, products, selectedId, onSelect, isCom
   <SectionWrapper title={title} description={description}>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {products.map((product) => {
-        const priceIncl = product.basePriceExcl * (1 + product.vatRate);
+        const priceIncl = product.basePriceExcl * (1 + (product.vatRatePercent ?? 21) / 100);
         const displayPrice = getDisplayPrice({ priceExcl: product.basePriceExcl, priceIncl }, isCompany);
         return (
           <Card

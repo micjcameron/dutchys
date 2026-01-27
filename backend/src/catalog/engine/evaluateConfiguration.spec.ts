@@ -1,33 +1,33 @@
 import { evaluateConfiguration } from './evaluateConfiguration';
 import { OptionGroupSelectionType } from '../entities/option-group.entity';
 import { RuleScope } from '../entities/rule.entity';
-import { ProductType } from '../../common/product-type.enum';
+import { ProductType } from '../entities/base-product.entity';
 
 describe('evaluateConfiguration', () => {
   const product = {
     id: 'product-1',
     type: ProductType.HOTTUB,
     basePriceExcl: 1000,
-    vatRate: 0.21,
+    vatRatePercent: 21,
   };
 
   const groups = [
-    { key: 'FILTRATION', selectionType: OptionGroupSelectionType.MULTI },
-    { key: 'SANDFILTER', selectionType: OptionGroupSelectionType.SINGLE },
-    { key: 'EXTRAS', selectionType: OptionGroupSelectionType.MULTI },
-    { key: 'SPASYSTEM', selectionType: OptionGroupSelectionType.SINGLE },
-    { key: 'HEATING', selectionType: OptionGroupSelectionType.SINGLE },
-    { key: 'STAIRS', selectionType: OptionGroupSelectionType.SINGLE },
+    { key: 'FILTRATION_BASE', selectionType: OptionGroupSelectionType.SINGLE },
+    { key: 'SANDFILTER_BASE', selectionType: OptionGroupSelectionType.SINGLE },
+    { key: 'EXTRAS_BASE', selectionType: OptionGroupSelectionType.MULTI },
+    { key: 'SPASYSTEM_BASE', selectionType: OptionGroupSelectionType.SINGLE },
+    { key: 'HEATING_BASE', selectionType: OptionGroupSelectionType.SINGLE },
+    { key: 'STAIRS_BASE', selectionType: OptionGroupSelectionType.SINGLE },
   ];
 
   const options = [
-    { key: 'SAND-FILTER', groupKey: 'FILTRATION', name: 'Sand filter', priceExcl: 100, vatRate: 0.21 },
-    { key: 'STAINLESS-SF-CONNECTIONS', groupKey: 'FILTRATION', name: 'Stainless', priceExcl: 50, vatRate: 0.21 },
-    { key: 'SAND-FILTER-BOX', groupKey: 'SANDFILTER', name: 'Sand filter box', priceExcl: 80, vatRate: 0.21 },
-    { key: 'CUPHOLDER-STANDARD', groupKey: 'EXTRAS', name: 'Cupholder', priceExcl: 0, vatRate: 0.21 },
-    { key: 'CIRCULATION-PUMP', groupKey: 'SPASYSTEM', name: 'Circulation pump', priceExcl: 150, vatRate: 0.21 },
-    { key: 'ELECTRIC-6KW', groupKey: 'HEATING', name: 'Electric heater', priceExcl: 800, vatRate: 0.21, tags: ['ELECTRIC'] },
-    { key: 'STAIRS-XL', groupKey: 'STAIRS', name: 'XL stairs', priceExcl: 120, vatRate: 0.21, tags: ['COVERS-SAND-FILTER'] },
+    { key: 'SAND-FILTER', groupKey: 'FILTRATION_BASE', name: 'Sand filter', priceExcl: 100, vatRatePercent: 21 },
+    { key: 'STAINLESS-SF-CONNECTIONS', groupKey: 'FILTRATION_BASE', name: 'Stainless', priceExcl: 50, vatRatePercent: 21 },
+    { key: 'SAND-FILTER-BOX', groupKey: 'SANDFILTER_BASE', name: 'Sand filter box', priceExcl: 80, vatRatePercent: 21 },
+    { key: 'CUPHOLDER-STANDARD', groupKey: 'EXTRAS_BASE', name: 'Cupholder', priceExcl: 0, vatRatePercent: 21 },
+    { key: 'CIRCULATION-PUMP', groupKey: 'SPASYSTEM_BASE', name: 'Circulation pump', priceExcl: 150, vatRatePercent: 21 },
+    { key: 'ELECTRIC-6KW', groupKey: 'HEATING_BASE', name: 'Electric heater', priceExcl: 800, vatRatePercent: 21, tags: ['ELECTRIC'] },
+    { key: 'STAIRS-XL', groupKey: 'STAIRS_BASE', name: 'XL stairs', priceExcl: 120, vatRatePercent: 21, tags: ['COVERS-SAND-FILTER'] },
   ];
 
   const rules = [
@@ -52,7 +52,7 @@ describe('evaluateConfiguration', () => {
     {
       key: 'DEFAULT-FILTRATION',
       scope: RuleScope.GLOBAL,
-      when: [{ type: 'groupEmpty', groupKey: 'FILTRATION' }],
+      when: [{ type: 'groupEmpty', groupKey: 'FILTRATION_BASE' }],
       then: [{ type: 'autoSelect', optionKey: 'STAINLESS-SF-CONNECTIONS' }],
     },
     {
@@ -69,7 +69,7 @@ describe('evaluateConfiguration', () => {
   it('requires sand-filter-box when sand-filter is selected', () => {
     const result = evaluateConfiguration({
       product,
-      selections: { FILTRATION: ['SAND-FILTER'] },
+      selections: { FILTRATION_BASE: ['SAND-FILTER'] },
       catalog: { groups, options },
       rules,
     });
@@ -83,24 +83,24 @@ describe('evaluateConfiguration', () => {
   it('disables cupholder options when sand-filter-box is selected', () => {
     const result = evaluateConfiguration({
       product,
-      selections: { SANDFILTER: ['SAND-FILTER-BOX'], EXTRAS: ['CUPHOLDER-STANDARD'] },
+      selections: { SANDFILTER_BASE: ['SAND-FILTER-BOX'], EXTRAS_BASE: ['CUPHOLDER-STANDARD'] },
       catalog: { groups, options },
       rules,
     });
 
     expect(result.disabledOptions['CUPHOLDER-STANDARD']).toBeDefined();
-    expect(result.resolvedSelections.EXTRAS).toEqual([]);
+    expect(result.resolvedSelections.EXTRAS_BASE).toEqual([]);
   });
 
   it('auto selects circulation pump for electric heating with zero price', () => {
     const result = evaluateConfiguration({
       product,
-      selections: { HEATING: 'ELECTRIC-6KW' },
+      selections: { HEATING_BASE: 'ELECTRIC-6KW' },
       catalog: { groups, options },
       rules,
     });
 
-    expect(result.resolvedSelections.SPASYSTEM).toContain('CIRCULATION-PUMP');
+    expect(result.resolvedSelections.SPASYSTEM_BASE).toContain('CIRCULATION-PUMP');
     const pump = result.pricing.breakdown.find((item) => item.key === 'CIRCULATION-PUMP');
     expect(pump?.priceExcl).toBe(0);
   });
@@ -113,22 +113,22 @@ describe('evaluateConfiguration', () => {
       rules,
     });
 
-    expect(result.resolvedSelections.FILTRATION).toContain('STAINLESS-SF-CONNECTIONS');
+    expect(result.resolvedSelections.FILTRATION_BASE).toContain('STAINLESS-SF-CONNECTIONS');
   });
 
   it('removes sand filter selections when stairs cover sand filter', () => {
     const result = evaluateConfiguration({
       product,
       selections: {
-        FILTRATION: ['SAND-FILTER'],
-        SANDFILTER: ['SAND-FILTER-BOX'],
-        STAIRS: 'STAIRS-XL',
+        FILTRATION_BASE: ['SAND-FILTER'],
+        SANDFILTER_BASE: ['SAND-FILTER-BOX'],
+        STAIRS_BASE: 'STAIRS-XL',
       },
       catalog: { groups, options },
       rules,
     });
 
-    expect(result.resolvedSelections.FILTRATION).not.toContain('SAND-FILTER');
-    expect(result.resolvedSelections.SANDFILTER).not.toContain('SAND-FILTER-BOX');
+    expect(result.resolvedSelections.FILTRATION_BASE).not.toContain('SAND-FILTER');
+    expect(result.resolvedSelections.SANDFILTER_BASE).not.toContain('SAND-FILTER-BOX');
   });
 });

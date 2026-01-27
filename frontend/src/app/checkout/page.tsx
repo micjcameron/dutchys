@@ -63,7 +63,7 @@ export default function CheckoutPage() {
           name: product.name,
           productType: product.type,
           priceExcl: product.basePriceExcl ?? 0,
-          priceIncl: (product.basePriceExcl ?? 0) * (1 + (product.vatRate ?? 0)),
+          priceIncl: (product.basePriceExcl ?? 0) * (1 + (product.vatRatePercent ?? 21) / 100),
         })) as Product[];
         if (isMounted) {
           setProducts(list);

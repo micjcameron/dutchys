@@ -1,4 +1,4 @@
-import { ProductType } from '../../common/product-type.enum';
+import { ProductType } from '../entities/base-product.entity';
 import { OptionGroupSelectionType } from '../entities/option-group.entity';
 import { RuleScope } from '../entities/rule.entity';
 
@@ -8,7 +8,7 @@ export interface BaseProduct {
   id: string;
   type: ProductType;
   basePriceExcl: number;
-  vatRate: number;
+  vatRatePercent: number;
 }
 
 export interface CatalogOptionGroup {
@@ -23,7 +23,7 @@ export interface CatalogOption {
   groupKey: string;
   name: string;
   priceExcl: number;
-  vatRate: number;
+  vatRatePercent: number;
   tags?: string[];
   attributes?: Record<string, unknown>;
 }
@@ -53,7 +53,7 @@ export interface EvaluationResult {
       key: string;
       name: string;
       priceExcl: number;
-      vatRate: number;
+      vatRatePercent: number;
       priceIncl: number;
       included?: boolean;
     }>;
@@ -377,15 +377,15 @@ export const evaluateConfiguration = (params: {
   }
 
   const breakdown: EvaluationResult['pricing']['breakdown'] = [];
-  const baseVatRate = product.vatRate ?? 0;
+  const baseVatRatePercent = product.vatRatePercent ?? 0;
   const basePriceExcl = product.basePriceExcl ?? 0;
-  const basePriceIncl = basePriceExcl * (1 + baseVatRate);
+  const basePriceIncl = basePriceExcl * (1 + baseVatRatePercent / 100);
   breakdown.push({
     type: 'base',
     key: product.id,
     name: 'Base product',
     priceExcl: basePriceExcl,
-    vatRate: baseVatRate,
+    vatRatePercent: baseVatRatePercent,
     priceIncl: basePriceIncl,
   });
 
@@ -399,8 +399,8 @@ export const evaluateConfiguration = (params: {
       continue;
     }
     const priceExcl = priceOverrides.get(optionKey) ?? option.priceExcl ?? 0;
-    const vatRate = option.vatRate ?? baseVatRate;
-    const priceIncl = priceExcl * (1 + vatRate);
+    const vatRatePercent = option.vatRatePercent ?? baseVatRatePercent;
+    const priceIncl = priceExcl * (1 + vatRatePercent / 100);
     const included = priceOverrides.has(optionKey) && priceExcl === 0;
 
     breakdown.push({
@@ -408,7 +408,7 @@ export const evaluateConfiguration = (params: {
       key: optionKey,
       name: option.name,
       priceExcl,
-      vatRate,
+      vatRatePercent,
       priceIncl,
       included: included || undefined,
     });
