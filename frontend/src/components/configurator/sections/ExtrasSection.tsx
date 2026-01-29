@@ -45,7 +45,7 @@ const ExtrasSection = ({
       <OptionGrid
         options={options}
         selectedKeys={selected}
-        selectionType="multi"
+        selectionType="MULTI"
         onToggle={toggle}
         disabledOptions={evaluation?.disabledOptions}
         hiddenOptions={evaluation?.hiddenOptions}

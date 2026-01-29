@@ -10,6 +10,7 @@ interface StairsSectionProps {
   options: CatalogOption[];
   selections: ConfigSelections;
   onSelectionsChange: (update: (prev: ConfigSelections) => ConfigSelections) => void;
+  onAutoAdvance?: () => void;
   evaluation: EvaluationResult | null;
   isCompany: boolean;
 }
@@ -20,18 +21,23 @@ const StairsSection = ({
   options,
   selections,
   onSelectionsChange,
+  onAutoAdvance,
   evaluation,
   isCompany,
 }: StairsSectionProps) => {
   const selected = selections.stairs?.optionId ?? null;
 
   const toggle = (key: string) => {
+    const isSelecting = selected !== key;
     onSelectionsChange((prev) => ({
       ...prev,
       stairs: {
         optionId: prev.stairs?.optionId === key ? null : key,
       },
     }));
+    if (isSelecting) {
+      onAutoAdvance?.();
+    }
   };
 
   return (

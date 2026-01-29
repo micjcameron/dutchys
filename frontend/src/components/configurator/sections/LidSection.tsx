@@ -10,6 +10,7 @@ interface LidSectionProps {
   options: CatalogOption[];
   selections: ConfigSelections;
   onSelectionsChange: (update: (prev: ConfigSelections) => ConfigSelections) => void;
+  onAutoAdvance?: () => void;
   evaluation: EvaluationResult | null;
   isCompany: boolean;
 }
@@ -20,18 +21,29 @@ const LidSection = ({
   options,
   selections,
   onSelectionsChange,
+  onAutoAdvance,
   evaluation,
   isCompany,
 }: LidSectionProps) => {
   const selected = selections.lid?.optionId ?? null;
 
   const toggle = (key: string) => {
+    if (evaluation?.hiddenOptions?.[key]) return;
+    if (evaluation?.disabledOptions?.[key]) return;
+
+    const isSelecting = selected !== key;
+
     onSelectionsChange((prev) => ({
       ...prev,
       lid: {
+        ...(prev.lid ?? {}),
         optionId: prev.lid?.optionId === key ? null : key,
       },
     }));
+
+    if (isSelecting) {
+      onAutoAdvance?.();
+    }
   };
 
   return (
@@ -39,11 +51,12 @@ const LidSection = ({
       <OptionGrid
         options={options}
         selectedKeys={selected ? [selected] : []}
-        selectionType="single"
+        selectionType="SINGLE"
         onToggle={toggle}
         disabledOptions={evaluation?.disabledOptions}
         hiddenOptions={evaluation?.hiddenOptions}
         isCompany={isCompany}
+        emptyLabel="Geen deksel-opties beschikbaar."
       />
     </SectionWrapper>
   );

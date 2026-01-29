@@ -10,6 +10,7 @@ interface SandFilterSectionProps {
   options: CatalogOption[];
   selections: ConfigSelections;
   onSelectionsChange: (update: (prev: ConfigSelections) => ConfigSelections) => void;
+  onAutoAdvance?: () => void;
   evaluation: EvaluationResult | null;
   isCompany: boolean;
 }
@@ -20,12 +21,14 @@ const SandFilterSection = ({
   options,
   selections,
   onSelectionsChange,
+  onAutoAdvance,
   evaluation,
   isCompany,
 }: SandFilterSectionProps) => {
   const selected = selections.filtration?.sandFilterBox ?? null;
 
   const toggle = (key: string) => {
+    const isSelecting = selected !== key;
     onSelectionsChange((prev) => ({
       ...prev,
       filtration: {
@@ -33,6 +36,9 @@ const SandFilterSection = ({
         sandFilterBox: prev.filtration?.sandFilterBox === key ? null : key,
       },
     }));
+    if (isSelecting) {
+      onAutoAdvance?.();
+    }
   };
 
   return (

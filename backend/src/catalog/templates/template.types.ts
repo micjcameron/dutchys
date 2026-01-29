@@ -1,3 +1,4 @@
+import { OptionGroupKey } from '../catalog-option-seed.types';
 import { ProductType } from '../entities/base-product.entity';
 
 export type SectionKey =
@@ -28,5 +29,6 @@ export type TemplateStep = {
 export type ConfiguratorTemplate = {
   key: string;
   productTypes: ProductType[];
+  opioptionGroupKeys?: OptionGroupKey[];
   steps: TemplateStep[];
 };

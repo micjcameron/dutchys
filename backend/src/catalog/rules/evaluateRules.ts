@@ -1,4 +1,4 @@
-import { OptionGroupKey } from '../../modules/catalog/types/catalog-option-seed.types';
+import { OptionGroupKey } from '../catalog-option-seed.types';
 import { BaseProductEntity } from '../entities/base-product.entity';
 import { CatalogOption, ConfigSelections } from '../sections/section.types';
 import { catalogRules } from './catalog.rules';
@@ -36,7 +36,8 @@ const getSelectedOptionKeys = (selections: ConfigSelections): Set<string> => {
   if (selections.spa?.systemId) {
     keys.add(selections.spa.systemId);
   }
-  selections.spa?.leds?.forEach((key) => keys.add(key));
+  const leds = normalizeLedQuantities(selections.spa?.leds);
+  Object.keys(leds).forEach((key) => keys.add(key));
   if (selections.lid?.optionId) {
     keys.add(selections.lid.optionId);
   }
@@ -45,8 +46,8 @@ const getSelectedOptionKeys = (selections: ConfigSelections): Set<string> => {
     keys.add(selections.filtration.filterId);
   }
   selections.filtration?.uv?.forEach((key) => keys.add(key));
-  if (selections.filtration?.sandFilterBox) {
-    keys.add(selections.filtration.sandFilterBox);
+  if (selections.filtration?.filterBoxId) {
+    keys.add(selections.filtration.filterBoxId);
   }
   if (selections.stairs?.optionId) {
     keys.add(selections.stairs.optionId);
@@ -59,6 +60,7 @@ const getSelectedOptionKeys = (selections: ConfigSelections): Set<string> => {
   return keys;
 };
 
+
 const removeKeyFromArray = (value: string[] | undefined, key: string) =>
   Array.isArray(value) ? value.filter((entry) => entry !== key) : [];
 
@@ -68,6 +70,26 @@ const addKeyToArray = (value: string[] | undefined, key: string) => {
     next.push(key);
   }
   return next;
+};
+
+const normalizeLedQuantities = (value: Record<string, number> | string[] | undefined) => {
+  if (Array.isArray(value)) {
+    return value.reduce<Record<string, number>>((acc, key) => {
+      if (!key) return acc;
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    }, {});
+  }
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value);
+    return entries.reduce<Record<string, number>>((acc, [key, qty]) => {
+      const nextQty = Number(qty ?? 0);
+      if (!key || !Number.isFinite(nextQty) || nextQty <= 0) return acc;
+      acc[key] = nextQty;
+      return acc;
+    }, {});
+  }
+  return {};
 };
 
 const applyOptionKey = (
@@ -115,10 +137,15 @@ const applyOptionKey = (
     case OptionGroupKey.LEDS_BASE:
       next.spa = {
         ...(next.spa ?? {}),
-        leds:
-          action === 'add'
-            ? addKeyToArray(next.spa?.leds, key)
-            : removeKeyFromArray(next.spa?.leds, key),
+        leds: (() => {
+          const current = normalizeLedQuantities(next.spa?.leds);
+          if (action === 'add') {
+            current[key] = current[key] && current[key] > 0 ? current[key] : 1;
+          } else {
+            delete current[key];
+          }
+          return current;
+        })(),
       };
       break;
     case OptionGroupKey.LID_BASE:
@@ -150,10 +177,10 @@ const applyOptionKey = (
       }
       break;
     }
-    case OptionGroupKey.SANDFILTER_BASE:
+    case OptionGroupKey.FILTRATION_BOX:
       next.filtration = {
         ...(next.filtration ?? {}),
-        sandFilterBox: toggleValue(next.filtration?.sandFilterBox ?? null),
+        filterBoxId: toggleValue(next.filtration?.filterBoxId ?? null),
       };
       break;
     case OptionGroupKey.STAIRS_BASE:
@@ -165,25 +192,24 @@ const applyOptionKey = (
         optionId: toggleValue(next.controlUnit?.optionId ?? null),
       };
       break;
+    case OptionGroupKey.HEATER_ADDONS_INTERNAL:
+    case OptionGroupKey.HEATER_ADDONS_EXTERNAL:
+      next.heating = {
+        ...(next.heating ?? {}),
+        extras:
+          action === 'add'
+            ? addKeyToArray(next.heating?.extras, key)
+            : removeKeyFromArray(next.heating?.extras, key),
+      };
+      break;
     case OptionGroupKey.EXTRAS_BASE: {
-      const isHeatingExtra = option.tags?.includes('HEATING-EXTRA') || option.attributes?.source === 'HEATING';
-      if (isHeatingExtra) {
-        next.heating = {
-          ...(next.heating ?? {}),
-          extras:
-            action === 'add'
-              ? addKeyToArray(next.heating?.extras, key)
-              : removeKeyFromArray(next.heating?.extras, key),
-        };
-      } else {
-        next.extras = {
-          ...(next.extras ?? {}),
-          optionIds:
-            action === 'add'
-              ? addKeyToArray(next.extras?.optionIds, key)
-              : removeKeyFromArray(next.extras?.optionIds, key),
-        };
-      }
+      next.extras = {
+        ...(next.extras ?? {}),
+        optionIds:
+          action === 'add'
+            ? addKeyToArray(next.extras?.optionIds, key)
+            : removeKeyFromArray(next.extras?.optionIds, key),
+      };
       break;
     }
     default:
@@ -222,17 +248,20 @@ const buildRuleContext = (
         case OptionGroupKey.SPASYSTEM_BASE:
           return selections.spa?.systemId ?? null;
         case OptionGroupKey.LEDS_BASE:
-          return selections.spa?.leds ?? [];
+          return Object.keys(normalizeLedQuantities(selections.spa?.leds));
         case OptionGroupKey.LID_BASE:
           return selections.lid?.optionId ?? null;
         case OptionGroupKey.FILTRATION_BASE:
           return selections.filtration?.filterId ?? null;
-        case OptionGroupKey.SANDFILTER_BASE:
-          return selections.filtration?.sandFilterBox ?? null;
+        case OptionGroupKey.FILTRATION_BOX:
+          return selections.filtration?.filterBoxId ?? null;
         case OptionGroupKey.STAIRS_BASE:
           return selections.stairs?.optionId ?? null;
         case OptionGroupKey.CONTROLUNIT_BASE:
           return selections.controlUnit?.optionId ?? null;
+        case OptionGroupKey.HEATER_ADDONS_INTERNAL:
+        case OptionGroupKey.HEATER_ADDONS_EXTERNAL:
+          return selections.heating?.extras ?? [];
         case OptionGroupKey.EXTRAS_BASE:
           return selections.extras?.optionIds ?? [];
         default:
@@ -267,29 +296,91 @@ export const evaluateRules = (params: {
   const { product, selections, options } = params;
   const rules = params.rules ?? catalogRules();
   const touchedKeys = new Set(selections.touchedKeys ?? []);
+  const optionMap = new Map(options.map((option) => [option.key, option]));
+  const touchedGroups = new Set<string>();
+  const groupKeys = new Set(
+    (Object.values(OptionGroupKey).filter((value) => typeof value === 'string') as string[]),
+  );
+
+  touchedKeys.forEach((key) => {
+    if (groupKeys.has(key as OptionGroupKey)) {
+      touchedGroups.add(key);
+      return;
+    }
+    const option = optionMap.get(key);
+    if (option?.groupKey) {
+      touchedGroups.add(option.groupKey);
+    }
+  });
 
   let workingSelections = { ...selections };
+  const validationErrors = new Set<string>();
+  const maxIterations = 10;
+  let iterations = 0;
 
-  const context = buildRuleContext(product, workingSelections, options);
-  const effects = runRules(rules, context);
+  for (; iterations < maxIterations; iterations += 1) {
+    const context = buildRuleContext(product, workingSelections, options);
+    const effects = runRules(rules, context);
+
+    const forbidEffects = effects.filter((effect) => effect.type === 'FORBID');
+    const defaultEffects = effects
+      .filter((effect) => effect.type === 'DEFAULT_SELECT')
+      .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+
+    let changed = false;
+
+    forbidEffects.forEach((effect) => {
+      if (!context.selected.has(effect.key)) {
+        return;
+      }
+      const option = context.getOption(effect.key);
+      if (!option) {
+        return;
+      }
+      workingSelections = applyOptionKey(workingSelections, option, 'remove');
+      validationErrors.add(effect.reason);
+      changed = true;
+    });
+
+    let selectedKeys = getSelectedOptionKeys(workingSelections);
+
+    defaultEffects.forEach((effect) => {
+      if (selectedKeys.has(effect.key)) {
+        return;
+      }
+      const option = context.getOption(effect.key);
+      if (!option) {
+        return;
+      }
+      if (touchedKeys.has(effect.key) || touchedGroups.has(option.groupKey)) {
+        return;
+      }
+      workingSelections = applyOptionKey(workingSelections, option, 'add');
+      selectedKeys = getSelectedOptionKeys(workingSelections);
+      changed = true;
+    });
+
+    if (!changed) {
+      break;
+    }
+  }
+
+  const finalContext = buildRuleContext(product, workingSelections, options);
+  const finalEffects = runRules(rules, finalContext);
 
   const hiddenOptions: Record<string, { reason: string }> = {};
   const disabledOptions: Record<string, { reason: string }> = {};
   const requirements: Array<{ key: string; message: string }> = [];
-  const validationErrors: string[] = [];
   const priceOverrides: Record<string, number> = {};
   const recommendations: RuleRecommendation[] = [];
   const warnings: RuleWarning[] = [];
 
-  const forbidEffects = effects.filter((effect) => effect.type === 'FORBID');
-  const hideEffects = effects.filter((effect) => effect.type === 'HIDE');
-  const defaultEffects = effects
-    .filter((effect) => effect.type === 'DEFAULT_SELECT')
-    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
-  const requireEffects = effects.filter((effect) => effect.type === 'REQUIRE');
-  const recommendEffects = effects.filter((effect) => effect.type === 'RECOMMEND');
-  const warningEffects = effects.filter((effect) => effect.type === 'WARNING');
-  const priceEffects = effects.filter((effect) => effect.type === 'PRICE_OVERRIDE');
+  const forbidEffects = finalEffects.filter((effect) => effect.type === 'FORBID');
+  const hideEffects = finalEffects.filter((effect) => effect.type === 'HIDE');
+  const requireEffects = finalEffects.filter((effect) => effect.type === 'REQUIRE');
+  const recommendEffects = finalEffects.filter((effect) => effect.type === 'RECOMMEND');
+  const warningEffects = finalEffects.filter((effect) => effect.type === 'WARNING');
+  const priceEffects = finalEffects.filter((effect) => effect.type === 'PRICE_OVERRIDE');
 
   hideEffects.forEach((effect) => {
     hiddenOptions[effect.key] = { reason: effect.reason };
@@ -297,31 +388,16 @@ export const evaluateRules = (params: {
 
   forbidEffects.forEach((effect) => {
     disabledOptions[effect.key] = { reason: effect.reason };
-    if (context.selected.has(effect.key)) {
-      const option = context.getOption(effect.key);
-      if (option) {
-        workingSelections = applyOptionKey(workingSelections, option, 'remove');
-        validationErrors.push(effect.reason);
-      }
+    if (finalContext.selected.has(effect.key)) {
+      validationErrors.add(effect.reason);
     }
   });
 
-  let selectedKeys = getSelectedOptionKeys(workingSelections);
-
-  defaultEffects.forEach((effect) => {
-    if (selectedKeys.has(effect.key) || touchedKeys.has(effect.key)) {
-      return;
-    }
-    const option = context.getOption(effect.key);
-    if (!option) {
-      return;
-    }
-    workingSelections = applyOptionKey(workingSelections, option, 'add');
-    selectedKeys = getSelectedOptionKeys(workingSelections);
-  });
+  // const finalSelectedKeys = finalContext.selected;
+  const finalSelectedKeys = getSelectedOptionKeys(workingSelections);
 
   requireEffects.forEach((effect) => {
-    if (!selectedKeys.has(effect.key)) {
+    if (!finalSelectedKeys.has(effect.key)) {
       requirements.push({ key: effect.key, message: effect.reason });
     }
   });
@@ -334,16 +410,23 @@ export const evaluateRules = (params: {
     warnings.push({ message: effect.message, key: effect.key });
   });
 
+  if (iterations >= maxIterations) {
+    warnings.push({
+      message: 'Regel-evaluatie bereikte de iteratielimiet; controleer op conflicterende regels.',
+    });
+  }
+
   priceEffects.forEach((effect) => {
     priceOverrides[effect.key] = effect.priceExcl;
   });
 
   return {
     selections: workingSelections,
+    selectedKeys: Array.from(finalSelectedKeys), 
     requirements,
     disabledOptions,
     hiddenOptions,
-    validationErrors,
+    validationErrors: Array.from(validationErrors),
     priceOverrides,
     recommendations,
     warnings,

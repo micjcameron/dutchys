@@ -9,9 +9,9 @@ export type CatalogResponse = {
   rules: Array<Record<string, any>>;
 };
 
-type NextFetchInit = RequestInit & { next?: { revalidate?: number } };
+type NextFetchInit = RequestInit & { next?: { revalidate?: number | false; tags?: string[] } };
 
-const withRevalidate = (init?: RequestInit): NextFetchInit | undefined => {
+const withRevalidate = (init?: NextFetchInit): NextFetchInit | undefined => {
   if (typeof window === 'undefined') {
     return { ...(init ?? {}), next: { revalidate: 60 } };
   }

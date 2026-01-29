@@ -4,7 +4,7 @@ import SectionWrapper from './SectionWrapper';
 import OptionGrid from './OptionGrid';
 import type { CatalogOption, ConfigSelections, EvaluationResult } from '@/types/catalog';
 
-interface ControlUnitSectionProps {
+interface CoverSectionProps {
   title: string;
   description?: string;
   options: CatalogOption[];
@@ -15,7 +15,7 @@ interface ControlUnitSectionProps {
   isCompany: boolean;
 }
 
-const ControlUnitSection = ({
+const CoverSection = ({
   title,
   description,
   options,
@@ -24,15 +24,15 @@ const ControlUnitSection = ({
   onAutoAdvance,
   evaluation,
   isCompany,
-}: ControlUnitSectionProps) => {
-  const selected = selections.controlUnit?.optionId ?? null;
+}: CoverSectionProps) => {
+  const selected = selections.cover?.optionId ?? null;
 
   const toggle = (key: string) => {
     const isSelecting = selected !== key;
     onSelectionsChange((prev) => ({
       ...prev,
-      controlUnit: {
-        optionId: prev.controlUnit?.optionId === key ? null : key,
+      cover: {
+        optionId: prev.cover?.optionId === key ? null : key,
       },
     }));
     if (isSelecting) {
@@ -50,9 +50,10 @@ const ControlUnitSection = ({
         disabledOptions={evaluation?.disabledOptions}
         hiddenOptions={evaluation?.hiddenOptions}
         isCompany={isCompany}
+        emptyLabel="Geen cover-opties beschikbaar."
       />
     </SectionWrapper>
   );
 };
 
-export default ControlUnitSection;
+export default CoverSection;

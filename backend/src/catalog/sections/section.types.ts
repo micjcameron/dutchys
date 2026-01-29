@@ -15,13 +15,14 @@ export type ConfigSelections = {
     externalMaterialId?: string | null;
   };
   insulation?: { optionId?: string | null };
-  spa?: { systemId?: string | null; leds?: string[] };
+  spa?: { systemId?: string | null; leds?: Record<string, number> | string[] };
   lid?: { optionId?: string | null };
   filtration?: {
     connections?: string[];
     filterId?: string | null;
     uv?: string[];
-    sandFilterBox?: string | null;
+    addons?: string[];
+    filterBoxId?: string | null;
   };
   stairs?: { optionId?: string | null };
   controlUnit?: { optionId?: string | null };
@@ -32,6 +33,7 @@ export type PriceItem = {
   type: 'base' | 'option';
   key: string;
   name: string;
+  quantity?: number;
   priceExcl: number;
   vatRatePercent: number;
   priceIncl: number;
@@ -42,8 +44,10 @@ export type CatalogOption = {
   key: string;
   groupKey: string;
   name: string;
+  subKey?: string | null;
   description?: string | null;
   priceExcl: number;
+  priceIncl?: number;
   vatRatePercent: number;
   images?: string[];
   tags?: string[];

@@ -59,6 +59,9 @@ export class BaseProductEntity {
   @Column({ type: 'numeric', precision: 12, scale: 2, transformer: numericTransformer })
   basePriceExcl!: number;
 
+  @Column({ type: 'numeric', precision: 12, scale: 2, transformer: numericTransformer, default: 0 })
+  basePriceIncl!: number;
+
   /**
    * Store VAT as integer percent (e.g. 21) to match how humans think.
    * Convert in code: vatMultiplier = vatRatePercent / 100

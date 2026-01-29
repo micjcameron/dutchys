@@ -3,8 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
 import { ProductType } from './entities/base-product.entity';
-import { SelectionInput } from './engine/evaluateConfiguration';
-import { evaluateTemplate } from './engine/evaluateTemplate';
+import { evaluateTemplate, SelectionInput } from './engine/evaluateTemplate';
 import { getTemplateForProductType } from './templates/templates';
 import { BaseProductEntity } from './entities/base-product.entity';
 import { OptionEntity } from './entities/option.entity';
@@ -80,9 +79,11 @@ export class CatalogService {
       .map((option) => ({
         id: option.id,
         key: option.key,
+        subKey: option.subKey,
         name: option.name,
         description: option.description,
         priceExcl: option.priceExcl,
+        priceIncl: option.priceIncl,
         vatRatePercent: option.vatRatePercent,
         images: option.images,
         tags: option.tags,
@@ -196,9 +197,12 @@ export class CatalogService {
       throw new NotFoundException('Template not found');
     }
 
+    const flattenedSelections = this.flattenSelectionsToGroupInput(selections, options);
+
+
     return evaluateTemplate({
       product,
-      selections: selections as any,
+      selections: flattenedSelections as any,
       template,
       catalog: { groups: optionGroups, options },
     });
@@ -275,4 +279,47 @@ export class CatalogService {
     await this.rulesRepository.delete(id);
     return { id };
   }
+
+  private flattenSelectionsToGroupInput(
+    raw: any,
+    options: Array<{ key: string; groupKey: string }>,
+  ): SelectionInput {
+    const optionToGroup = new Map(options.map((o) => [o.key, o.groupKey]));
+    const out: Record<string, string[]> = {};
+  
+    const add = (optionKey: string) => {
+      const groupKey = optionToGroup.get(optionKey);
+      if (!groupKey) return;
+  
+      if (!out[groupKey]) out[groupKey] = [];
+      out[groupKey].push(optionKey); // keep duplicates (quantity / repeated keys model)
+    };
+  
+    const walk = (v: any) => {
+      if (v == null) return;
+  
+      if (typeof v === 'string') {
+        add(v);
+        return;
+      }
+  
+      if (Array.isArray(v)) {
+        for (const item of v) walk(item);
+        return;
+      }
+  
+      if (typeof v === 'object') {
+        for (const val of Object.values(v)) walk(val);
+        return;
+      }
+  
+      // ignore booleans/numbers/etc.
+    };
+  
+    walk(raw);
+  
+    // ensure all groups exist (optional – evaluator can handle missing keys)
+    return out;
+  }
+  
 }

@@ -35,6 +35,7 @@ const SummarySection = ({
               <div key={item.key} className="flex justify-between">
                 <span>
                   {item.name}
+                  {item.quantity ? ` x${item.quantity}` : ''}
                   {item.included ? ' (inbegrepen)' : ''}
                 </span>
                 <span>€{formatCurrency(isCompany ? item.priceExcl : item.priceIncl)}</span>

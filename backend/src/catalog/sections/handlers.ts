@@ -19,6 +19,31 @@ const getOption = (options: SectionContext['options'], key?: string | null) =>
 const filterOptionsByGroup = (options: SectionContext['options'], groupKey: string) =>
   options.filter((option) => option.groupKey === groupKey);
 
+const normalizeLedQuantities = (value: Record<string, number> | string[] | undefined) => {
+  if (Array.isArray(value)) {
+    return value.reduce<Record<string, number>>((acc, key) => {
+      if (!key) return acc;
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    }, {});
+  }
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value);
+    return entries.reduce<Record<string, number>>((acc, [key, qty]) => {
+      const nextQty = Number(qty ?? 0);
+      if (!key || !Number.isFinite(nextQty) || nextQty <= 0) return acc;
+      acc[key] = nextQty;
+      return acc;
+    }, {});
+  }
+  return {};
+};
+
+const clampQty = (qty: number, min: number, max: number, step: number) => {
+  const snapped = step > 1 ? Math.round(qty / step) * step : qty;
+  return Math.max(min, Math.min(max, snapped));
+};
+
 export const baseSection: (context: SectionContext) => SectionResult = (context) => {
   const selections = {
     ...context.selections,
@@ -61,18 +86,17 @@ export const heatingSection = (context: SectionContext): SectionResult => {
   const selectedOption = availableHeatingOptions.find((option) => option.key === heatingSelection.optionId) ?? null;
 
   const extras = ensureArray(heatingSelection.extras);
-  const heatingExtras = filterOptionsByGroup(context.options, 'EXTRAS_BASE').filter((option) =>
-    option.tags?.includes('HEATING-EXTRA'),
-  );
+  const heatingExtras = [
+    ...filterOptionsByGroup(context.options, 'HEATER_ADDONS_INTERNAL'),
+    ...filterOptionsByGroup(context.options, 'HEATER_ADDONS_EXTERNAL'),
+  ];
   const extraOptionKeys = Array.isArray(selectedOption?.attributes?.extraOptionKeys)
     ? (selectedOption?.attributes?.extraOptionKeys as string[])
-    : [];
+    : null;
   const allowedExtras =
-    selectedOption && extraOptionKeys.length > 0
+    selectedOption && extraOptionKeys
       ? heatingExtras.filter((option) => extraOptionKeys.includes(option.key))
-      : selectedOption
-        ? heatingExtras
-        : [];
+      : [];
   const validExtras = extras.filter((key) => allowedExtras.some((option) => option.key === key));
 
   const nextExtras = selectedOption ? validExtras : [];
@@ -99,10 +123,10 @@ export const materialsSection = (context: SectionContext): SectionResult => {
   const selections = { ...context.selections };
   const materialSelection = selections.materials ?? {};
   const internal = context.options.find(
-    (option) => option.groupKey === 'MATERIALS-INTERNAL_BASE' && option.key === materialSelection.internalMaterialId,
+    (option) => option.groupKey === 'MATERIALS_INTERNAL_BASE' && option.key === materialSelection.internalMaterialId,
   );
   const external = context.options.find(
-    (option) => option.groupKey === 'MATERIALS-EXTERNAL_BASE' && option.key === materialSelection.externalMaterialId,
+    (option) => option.groupKey === 'MATERIALS_EXTERNAL_BASE' && option.key === materialSelection.externalMaterialId,
   );
 
   selections.materials = {
@@ -128,9 +152,21 @@ export const spaSection = (context: SectionContext): SectionResult => {
   const systemOption = context.options.find(
     (option) => option.groupKey === 'SPASYSTEM_BASE' && option.key === spaSelection.systemId,
   );
-  const leds = ensureArray(spaSelection.leds).filter((key) => {
+  const ledsInput = normalizeLedQuantities(spaSelection.leds);
+  const leds: Record<string, number> = {};
+  Object.entries(ledsInput).forEach(([key, qty]) => {
     const option = context.options.find((item) => item.key === key);
-    return option?.groupKey === 'LEDS_BASE';
+    if (option?.groupKey !== 'LEDS_BASE') {
+      return;
+    }
+    const rule = option.quantityRule ?? {};
+    const min = typeof rule.min === 'number' ? rule.min : 0;
+    const max = typeof rule.max === 'number' ? rule.max : 999;
+    const step = typeof rule.step === 'number' ? rule.step : 1;
+    const clamped = clampQty(qty, min, max, step);
+    if (clamped > 0) {
+      leds[key] = clamped;
+    }
   });
 
   selections.spa = {
@@ -152,36 +188,61 @@ export const lidSection = (context: SectionContext): SectionResult => {
 export const filtrationSection = (context: SectionContext): SectionResult => {
   const selections = { ...context.selections };
   const filtrationSelection = selections.filtration ?? {};
-  const filtrationOptions = filterOptionsByGroup(context.options, 'FILTRATION_BASE');
+
+  // Base options: connections + filter/no-filter live here
+  const baseOptions = filterOptionsByGroup(context.options, 'FILTRATION_BASE');
+
+  // Addons: UV lives here
+  const addonOptions = filterOptionsByGroup(context.options, 'FILTRATION_ADDONS');
 
   const connections = ensureArray(filtrationSelection.connections).filter((key) => {
-    const option = getOption(filtrationOptions, key);
+    const option = getOption(baseOptions, key);
     return option?.attributes?.type === 'CONNECTION' || option?.tags?.includes('CONNECTION');
   });
 
-  const filterOption = getOption(filtrationOptions, filtrationSelection.filterId ?? null);
+  const filterOption = getOption(baseOptions, filtrationSelection.filterId ?? null);
+
+  // ✅ validate UV against ADDON options (not base)
   const uv = ensureArray(filtrationSelection.uv).filter((key) => {
-    const option = getOption(filtrationOptions, key);
+    const option = getOption(addonOptions, key);
     return option?.attributes?.type === 'UV' || option?.tags?.includes('UV');
   });
 
-  selections.filtration = {
+  // ✅ build next filtration by merging existing filtrationSelection (NOT selections)
+  const nextFiltration = {
+    ...filtrationSelection,
     connections,
     filterId: filterOption?.key ?? null,
     uv,
-    sandFilterBox: filterOption?.key === 'SAND-FILTER' ? filtrationSelection.sandFilterBox ?? null : null,
+    filterBoxId: filterOption?.key === 'SAND-FILTER' ? filtrationSelection.filterBoxId ?? null : null,
   };
 
-  return emptyResult(selections);
+  // ✅ optional: clear UV when no filter or explicit NO-FILTER selected
+  const hasFilter = !!nextFiltration.filterId && nextFiltration.filterId !== 'NO-FILTER';
+  if (!hasFilter) {
+    nextFiltration.uv = [];
+  }
+
+  selections.filtration = nextFiltration;
+
+  return {
+    selections,
+    requirements: [],
+    disabledOptions: {},
+    hiddenOptions: {},
+    validationErrors: [],
+    priceOverrides: {},
+  };
 };
 
-export const sandFilterSection = (context: SectionContext): SectionResult => {
+
+export const filterBoxSection = (context: SectionContext): SectionResult => {
   const selections = { ...context.selections };
   const filtrationSelection = selections.filtration ?? {};
-  const option = getOption(context.options, filtrationSelection.sandFilterBox ?? null);
+  const option = getOption(context.options, filtrationSelection.filterBoxId ?? null);
   selections.filtration = {
     ...filtrationSelection,
-    sandFilterBox: option?.key ?? null,
+    filterBoxId: option?.key ?? null,
   };
   return emptyResult(selections);
 };

@@ -12,6 +12,7 @@ import { createCart, createPayment, createSale } from '@/api/checkoutApi';
 import { updateCart } from '@/api/cartApi';
 import { CartItem, CartSummaryEntry, CheckoutFormData } from '@/types/checkout';
 import { fetchCatalog } from '@/api/catalogApi';
+import { toPriceExcl } from '@/utils/price-util';
 
 type Product = {
   id: string;
@@ -21,7 +22,8 @@ type Product = {
   productType?: string;
 };
 
-const toExcl = (value: number) => Math.round((value / 1.21) * 100) / 100;
+const toExcl = (value: number, vatRatePercent = 21) =>
+  Math.round(toPriceExcl(value, vatRatePercent) * 100) / 100;
 const formatAmountValue = (value: number) => value.toFixed(2);
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8081';
 const siteBaseUrl = process.env.NEXT_PUBLIC_SITE_URL;
@@ -63,7 +65,7 @@ export default function CheckoutPage() {
           name: product.name,
           productType: product.type,
           priceExcl: product.basePriceExcl ?? 0,
-          priceIncl: (product.basePriceExcl ?? 0) * (1 + (product.vatRatePercent ?? 21) / 100),
+          priceIncl: product.basePriceIncl ?? product.priceIncl ?? 0,
         })) as Product[];
         if (isMounted) {
           setProducts(list);

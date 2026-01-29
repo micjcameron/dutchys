@@ -14,6 +14,8 @@ type Product = {
   name: string;
   description: string;
   basePriceExcl?: number;
+  basePriceIncl?: number;
+  priceIncl?: number;
   vatRatePercent?: number;
   images?: string[];
   attributes?: Record<string, any>;
@@ -29,8 +31,7 @@ interface ProductDetailsProps {
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
   const priceExcl = product.basePriceExcl ?? 0;
-  const vatRatePercent = product.vatRatePercent ?? 21;
-  const priceIncl = priceExcl * (1 + vatRatePercent / 100);
+  const priceIncl = product.priceIncl ?? product.basePriceIncl ?? priceExcl;
   const details = product.images?.length ? product.images : product.image ? [product.image] : [];
   const features = product.attributes?.features ?? [];
   const delivery = product.delivery ?? '2-4 weken';

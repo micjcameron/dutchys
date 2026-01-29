@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { Users, Flame, Zap, ArrowRight, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import { fetchCatalog } from '@/api/catalogApi';
+import { slugify } from '@/lib/utils';
 
 interface Product {
   id: string;
+  slug?: string | null;
   name: string;
   description: string;
   shape?: string | null;
@@ -59,6 +61,7 @@ export default function ProductGrid({
         const catalog = await fetchCatalog(productType);
         const list = (catalog.baseProducts ?? []).map((product: any) => ({
           id: product.id,
+          slug: product.slug ?? null,
           name: product.name,
           description: product.description,
           shape: product.shape ?? null,
@@ -67,9 +70,7 @@ export default function ProductGrid({
           personsMax: product.attributes?.personsMax ?? null,
           heatingTypes: product.heatingTypes ?? null,
           priceExcl: product.basePriceExcl ?? 0,
-          priceIncl:
-            (product.basePriceExcl ?? 0) *
-            (1 + ((product.vatRatePercent ?? 21) / 100)),
+          priceIncl: product.basePriceIncl ?? product.priceIncl ?? 0,
           image: product.images?.[0] ?? product.image,
         })) as Product[];
         if (isMounted) {
@@ -278,9 +279,8 @@ export default function ProductGrid({
                 <div className="text-brand-orange font-semibold text-lg mb-4">
                   €{product.priceIncl.toLocaleString('nl-NL')}
                 </div>
-                <Link
-                  href={`/product/${product.id}`}
-                  className="inline-flex items-center justify-center gap-2 bg-brand-blue text-white rounded-full px-6 py-3 font-medium hover:bg-brand-blue/90 transition-colors"
+                <Link href={`/product/${slugify(product.slug ?? product.name)}--${product.id}`}                 
+                className="inline-flex items-center justify-center gap-2 bg-brand-blue text-white rounded-full px-6 py-3 font-medium hover:bg-brand-blue/90 transition-colors"
                 >
                   Bekijk details <ArrowRight className="w-4 h-4" />
                 </Link>

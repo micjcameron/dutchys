@@ -38,6 +38,10 @@ export class OptionEntity {
   @Column({ type: 'varchar' })
   key!: string;
 
+  // UI subsection within a group (e.g. FILTRATION_BASE -> CONNECTION/FILTER/UV)
+  @Column({ type: 'varchar', nullable: true })
+  subKey!: string | null;
+
   @Column({ type: 'varchar' })
   name!: string;
 
@@ -46,6 +50,9 @@ export class OptionEntity {
 
   @Column({ type: 'numeric', precision: 12, scale: 2, transformer: numericTransformer })
   priceExcl!: number;
+
+  @Column({ type: 'numeric', precision: 12, scale: 2, transformer: numericTransformer, default: 0 })
+  priceIncl!: number;
 
   @Column({ type: 'smallint', default: 21 })
   vatRatePercent!: number;

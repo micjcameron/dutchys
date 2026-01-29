@@ -10,6 +10,7 @@ interface InsulationSectionProps {
   options: CatalogOption[];
   selections: ConfigSelections;
   onSelectionsChange: (update: (prev: ConfigSelections) => ConfigSelections) => void;
+  onAutoAdvance?: () => void;
   evaluation: EvaluationResult | null;
   isCompany: boolean;
 }
@@ -20,18 +21,32 @@ const InsulationSection = ({
   options,
   selections,
   onSelectionsChange,
+  onAutoAdvance,
   evaluation,
   isCompany,
 }: InsulationSectionProps) => {
   const selected = selections.insulation?.optionId ?? null;
 
+  const disabled = evaluation?.disabledOptions ?? {};
+  const hidden = evaluation?.hiddenOptions ?? {};
+
   const toggle = (key: string) => {
+    // Guard against rule constraints
+    if (disabled[key] || hidden[key]) return;
+
+    const isSelecting = selected !== key;
+
     onSelectionsChange((prev) => ({
       ...prev,
       insulation: {
         optionId: prev.insulation?.optionId === key ? null : key,
       },
     }));
+
+    // Only auto-advance when selecting (not unselecting)
+    if (isSelecting) {
+      onAutoAdvance?.();
+    }
   };
 
   return (
@@ -39,10 +54,10 @@ const InsulationSection = ({
       <OptionGrid
         options={options}
         selectedKeys={selected ? [selected] : []}
-        selectionType="single"
+        selectionType="SINGLE"
         onToggle={toggle}
-        disabledOptions={evaluation?.disabledOptions}
-        hiddenOptions={evaluation?.hiddenOptions}
+        disabledOptions={disabled}
+        hiddenOptions={hidden}
         isCompany={isCompany}
       />
     </SectionWrapper>

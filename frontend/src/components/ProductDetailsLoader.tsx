@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import ProductDetails from '@/components/ProductDetails';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8081';
 
 type Product = {
   id: string;
+  slug?: string;
   name: string;
   description: string;
   basePriceExcl?: number;
@@ -24,6 +26,7 @@ const SkeletonBlock = ({ className }: { className: string }) => (
 );
 
 export default function ProductDetailsLoader({ productId }: { productId: string }) {
+  const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [error, setError] = useState(false);
 
@@ -37,6 +40,9 @@ export default function ProductDetailsLoader({ productId }: { productId: string 
         }
         const data = await response.json();
         if (isMounted) {
+          if (data?.slug && data.slug !== productId) {
+            router.replace(`/product/${data.slug}`);
+          }
           setProduct(data);
         }
       } catch (err) {
@@ -51,7 +57,7 @@ export default function ProductDetailsLoader({ productId }: { productId: string 
     return () => {
       isMounted = false;
     };
-  }, [productId]);
+  }, [productId, router]);
 
   if (error) {
     return (

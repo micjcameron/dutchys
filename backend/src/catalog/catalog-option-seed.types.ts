@@ -1,22 +1,26 @@
-import type { OptionColorVariant } from '../../../catalog/entities/option.entity';
-import type { ProductType } from '../../../catalog/entities/base-product.entity';
+import type { OptionColorVariant } from '../catalog/entities/option.entity';
+import type { ProductType } from '../catalog/entities/base-product.entity';
 
 export enum OptionGroupKey {
   HEATER_INSTALLATION = 'HEATER_INSTALLATION',
   COOLER_BASE = 'COOLER_BASE',
   COOLER_ADD_ON = 'COOLER_ADD_ON',
   HEATING_BASE = 'HEATING_BASE',
+  HEATER_ADDONS_INTERNAL = 'HEATER_ADDONS_INTERNAL',
+  HEATER_ADDONS_EXTERNAL = 'HEATER_ADDONS_EXTERNAL',
   EXTRAS_BASE = 'EXTRAS_BASE',
-  MATERIALS_INTERNAL_BASE = 'MATERIALS-INTERNAL_BASE',
-  MATERIALS_EXTERNAL_BASE = 'MATERIALS-EXTERNAL_BASE',
+  MATERIALS_INTERNAL_BASE = 'MATERIALS_INTERNAL_BASE',
+  MATERIALS_EXTERNAL_BASE = 'MATERIALS_EXTERNAL_BASE',
   INSULATION_BASE = 'INSULATION_BASE',
   SPASYSTEM_BASE = 'SPASYSTEM_BASE',
   LEDS_BASE = 'LEDS_BASE',
   FILTRATION_BASE = 'FILTRATION_BASE',
+  FILTRATION_ADDONS = 'FILTRATION_ADDONS',
+  FILTRATION_BOX = 'FILTRATION_BOX',
+  COVER_BASE = 'COVER_BASE',
   CONTROLUNIT_BASE = 'CONTROLUNIT_BASE',
   LID_BASE = 'LID_BASE',
   STAIRS_BASE = 'STAIRS_BASE',
-  SANDFILTER_BASE = 'SANDFILTER_BASE',
 }
 
 export enum OptionTag {
@@ -34,11 +38,16 @@ export enum OptionTag {
   AIR_BUBBLE = 'AIR-BUBBLE',
   LED = 'LED',
   INDIVIDUAL = 'INDIVIDUAL',
-  STRIP = 'STRIP',
+  LED_STRIP = 'LED_STRIP',
+  LED_BAND = 'LED_BAND',
   FILTRATION = 'FILTRATION',
   CONNECTION = 'CONNECTION',
   FILTER = 'FILTER',
+  FILTER_BOX = 'FILTER_BOX',
   UV = 'UV',
+  COVER = 'COVER',
+  THERMAL_COVER = 'THERMAL-COVER',
+  FIBERGLASS_COVER = 'FIBERGLASS-COVER',
   CONTROL = 'CONTROL',
   TRADITIONAL = 'TRADITIONAL',
   LED_DISPLAY = 'LED-DISPLAY',
@@ -53,7 +62,6 @@ export enum OptionTag {
   COMFORT = 'COMFORT',
   SAFETY = 'SAFETY',
   MAINTENANCE = 'MAINTENANCE',
-  SAND_FILTER_BOX = 'SAND-FILTER-BOX',
 }
 
 export enum HeatingType {
@@ -77,11 +85,6 @@ export enum HeatingCategory {
   HYBRIDE = 'HYBRIDE',
 }
 
-export enum HeatingPlacement {
-  INTERN = 'intern',
-  EXTERN = 'extern',
-}
-
 export enum HeatingSize {
   KLEIN = 'Klein',
   GROOT = 'Groot',
@@ -100,17 +103,31 @@ export enum SpaSystemType {
 export enum LedType {
   INDIVIDUAL = 'INDIVIDUAL',
   STRIP = 'STRIP',
+  BAND = 'STRIP',
 }
 
 export enum FiltrationType {
   CONNECTION = 'CONNECTION',
   FILTER = 'FILTER',
   UV = 'UV',
+  NONE = 'NONE'
 }
 
 export enum FiltrationRole {
   MAIN = 'MAIN',
   ADDON = 'ADDON',
+}
+
+export enum CoverType {
+  THERMAL = 'THERMAL',
+  FIBERGLASS = 'FIBERGLASS',
+}
+
+export enum CoverShape {
+  ROUND = 'ROUND',
+  SQUARE = 'SQUARE',
+  OFURO = 'OFURO',
+  PLUNGE = 'PLUNGE',
 }
 
 export enum ControlUnitType {
@@ -190,11 +207,13 @@ type CatalogOptionBase = {
   name: string;
   description: string;
   priceExcl: number;
+  priceIncl?: number;
   vatRatePercent: number;
   images: string[];
   tags: OptionTag[];
   appliesTo?: AppliesTo;
   quantityRule?: QuantityRule;
+  subKey?: string | null;
   isActive: boolean;
 };
 
@@ -215,11 +234,13 @@ export type HeatingAttributes = {
   heatingTime: string | null;
   power: string | null;
   voltage: string | null;
-  placement: HeatingPlacement | null;
+  placement: HeaterInstallationType | null;
   size: HeatingSize | null;
   pros: string[];
   cons: string[];
   extraOptionKeys: string[];
+  doorType?: 'METAL' | 'GLASS';
+  kW?: number | null;
 };
 
 export type HeaterInstallationAttributes = {
@@ -232,12 +253,27 @@ export type CoolerAttributes = {
   coolingCapacity?: string | null;
 };
 
-export type MaterialAttributes = {
-  colors: OptionColorVariant[];
-  pros: string[];
-  cons: string[];
-};
+export type MaterialFamily =
+  | 'FIBERGLASS'
+  | 'ACRYLIC'
+  | 'WOOD'
+  | 'WPC'
+  | 'WPC_HKC';
 
+export type MaterialFinish =
+  | 'STANDARD'
+  | 'PEARL'
+  | 'GRANITE'
+  | 'MARBLE';
+
+export type MaterialProfile = 'STANDARD' | 'W_PROFILE';
+
+export type MaterialAttributes = {
+  family: MaterialFamily;
+  finish?: MaterialFinish | null;   // internal
+  profile?: MaterialProfile | null; // external wood
+  notes?: string[];                 // optional, for UI text
+};
 export type InsulationAttributes = {
   pros: string[];
   cons: string[];
@@ -260,6 +296,12 @@ export type FiltrationAttributes = {
   type: FiltrationType;
   role: FiltrationRole;
   required: boolean;
+};
+
+export type CoverAttributes = {
+  type: CoverType;
+  shape: CoverShape;
+  sizeCm?: number | null;
 };
 
 export type ControlUnitAttributes = {
@@ -289,7 +331,7 @@ export type SourceAttributes = {
   source: OptionSource;
 };
 
-export type SandFilterAttributes = {
+export type FilterBoxAttributes = {
   inheritsExternalColor: boolean;
 };
 
@@ -335,6 +377,14 @@ export type CatalogOptionSeed =
       attributes: FiltrationAttributes;
     })
   | (CatalogOptionBase & {
+    groupKey: OptionGroupKey.FILTRATION_ADDONS;
+    attributes: FiltrationAttributes;
+  })
+  | (CatalogOptionBase & {
+      groupKey: OptionGroupKey.COVER_BASE;
+      attributes: CoverAttributes;
+    })
+  | (CatalogOptionBase & {
       groupKey: OptionGroupKey.CONTROLUNIT_BASE;
       attributes: ControlUnitAttributes;
     })
@@ -347,10 +397,18 @@ export type CatalogOptionSeed =
       attributes: StairsAttributes;
     })
   | (CatalogOptionBase & {
+      groupKey: OptionGroupKey.HEATER_ADDONS_INTERNAL;
+      attributes: ExtraAttributes | SourceAttributes;
+    })
+  | (CatalogOptionBase & {
+      groupKey: OptionGroupKey.HEATER_ADDONS_EXTERNAL;
+      attributes: ExtraAttributes | SourceAttributes;
+    })
+  | (CatalogOptionBase & {
       groupKey: OptionGroupKey.EXTRAS_BASE;
       attributes: ExtraAttributes | SourceAttributes;
     })
   | (CatalogOptionBase & {
-      groupKey: OptionGroupKey.SANDFILTER_BASE;
-      attributes: SandFilterAttributes;
+      groupKey: OptionGroupKey.FILTRATION_BOX;
+      attributes: FilterBoxAttributes;
     });

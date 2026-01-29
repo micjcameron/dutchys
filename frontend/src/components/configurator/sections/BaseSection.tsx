@@ -11,20 +11,35 @@ interface BaseSectionProps {
   products: BaseProduct[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onAutoAdvance?: () => void;
   isCompany: boolean;
 }
 
-const BaseSection = ({ title, description, products, selectedId, onSelect, isCompany }: BaseSectionProps) => (
+const BaseSection = ({
+  title,
+  description,
+  products,
+  selectedId,
+  onSelect,
+  onAutoAdvance,
+  isCompany,
+}: BaseSectionProps) => (
   <SectionWrapper title={title} description={description}>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {products.map((product) => {
-        const priceIncl = product.basePriceExcl * (1 + (product.vatRatePercent ?? 21) / 100);
+        const priceIncl = product.basePriceIncl ?? product.basePriceExcl;
         const displayPrice = getDisplayPrice({ priceExcl: product.basePriceExcl, priceIncl }, isCompany);
         return (
           <Card
             key={product.id}
             className={`cursor-pointer transition-all ${selectedId === product.id ? 'ring-2 ring-brand-orange bg-brand-orange/5' : 'hover:shadow-md'}`}
-            onClick={() => onSelect(product.id)}
+            onClick={() => {
+              if (selectedId === product.id) {
+                return;
+              }
+              onSelect(product.id);
+              onAutoAdvance?.();
+            }}
           >
             <CardHeader>
               <CardTitle>{product.name}</CardTitle>

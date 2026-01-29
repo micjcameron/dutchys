@@ -14,6 +14,16 @@ export enum OptionGroupSelectionType {
   BOOLEAN = 'BOOLEAN',
 }
 
+export type OptionGroupSubSection = {
+  key: string;                 // e.g. "CONNECTION", "FILTER", "UV"
+  title: string;               // e.g. "Verbindingen"
+  selectionType: OptionGroupSelectionType; // SINGLE/MULTI/BOOLEAN
+  min?: number | null;
+  max?: number | null;
+  sortOrder?: number;
+};
+
+
 @Entity({ name: 'option_groups' })
 @Index(['sortOrder', 'isActive'])
 export class OptionGroupEntity {
@@ -39,6 +49,8 @@ export class OptionGroupEntity {
   @Column({ type: 'int', default: 0 })
   sortOrder!: number;
 
+  @Column({ type: 'jsonb', nullable: true })
+  subSections!: OptionGroupSubSection[] | null;
   /**
    * This is fine as jsonb for now (fast + flexible).
    * If later you want strict relational modeling, make a join table.

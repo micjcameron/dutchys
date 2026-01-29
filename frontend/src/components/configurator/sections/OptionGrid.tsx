@@ -9,7 +9,7 @@ import type { CatalogOption } from '@/types/catalog';
 export type OptionGridProps = {
   options: CatalogOption[];
   selectedKeys: string[];
-  selectionType: 'single' | 'multi';
+  selectionType: 'SINGLE' | 'MULTI' | 'BOOLEAN';
   onToggle: (key: string) => void;
   disabledOptions?: Record<string, { reason: string }>;
   hiddenOptions?: Record<string, { reason: string }>;
@@ -49,7 +49,7 @@ const OptionGrid = ({
       {visibleOptions.map((option) => {
         const isSelected = selectedKeys.includes(option.key);
         const disabledReason = disabledOptions?.[option.key]?.reason;
-        const priceIncl = option.priceExcl * (1 + (option.vatRatePercent ?? 21) / 100);
+        const priceIncl = option.priceIncl ?? option.priceExcl;
         const displayPrice = getDisplayPrice({ priceExcl: option.priceExcl, priceIncl }, isCompany);
         const imageSrc = option.images?.[0] as string | undefined;
         const power = option.attributes?.power as string | undefined;
@@ -95,7 +95,7 @@ const OptionGrid = ({
               <div className="text-sm font-semibold text-brand-orange mt-3">
                 €{formatCurrency(displayPrice)}
               </div>
-              {selectionType === 'multi' && (
+              {selectionType === 'MULTI' && (
                 <div className="text-xs text-gray-400 mt-1">Meerdere opties mogelijk</div>
               )}
             </CardContent>

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { clearCartId, loadCart, updateCartItemQuantity, removeCartItem } from '@/utils/localStorage';
 import { deleteCart, updateCart } from '@/api/cartApi';
 import { fetchCatalog } from '@/api/catalogApi';
+import { toPriceExcl } from '@/utils/price-util';
 
 type CartItem = {
   id?: string;
@@ -89,7 +90,7 @@ export default function CartPage() {
           description: product.description,
           productType: product.type,
           priceExcl: product.basePriceExcl ?? 0,
-          priceIncl: (product.basePriceExcl ?? 0) * (1 + (product.vatRatePercent ?? 21) / 100),
+          priceIncl: product.basePriceIncl ?? product.priceIncl ?? 0,
           image: product.images?.[0] ?? product.image,
           attributes: product.attributes ?? {},
           heatingTypes: product.heatingTypes ?? null,
@@ -111,7 +112,8 @@ export default function CartPage() {
 
   const formatCurrency = (value: number) =>
     value.toLocaleString('nl-NL', { minimumFractionDigits: 2 });
-  const toExcl = (value: number) => Math.round((value / 1.21) * 100) / 100;
+  const toExcl = (value: number, vatRatePercent = 21) =>
+    Math.round(toPriceExcl(value, vatRatePercent) * 100) / 100;
 
   const entries = useMemo(() => {
     return items

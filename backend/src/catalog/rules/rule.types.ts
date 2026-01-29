@@ -1,8 +1,9 @@
+import { OptionGroupKey } from '../catalog-option-seed.types';
 import { BaseProductEntity } from '../entities/base-product.entity';
 import { CatalogOption, ConfigSelections } from '../sections/section.types';
-import { OptionGroupKey } from '../../modules/catalog/types/catalog-option-seed.types';
 
 export type RuleEffect =
+  | { type: 'INFO'; key: string; reason: string }
   | { type: 'REQUIRE'; key: string; reason: string }
   | { type: 'FORBID'; key: string; reason: string }
   | { type: 'HIDE'; key: string; reason: string }
@@ -44,6 +45,7 @@ export type RuleWarning = {
 export type RuleEvaluationResult = {
   selections: ConfigSelections;
   requirements: Array<{ key: string; message: string }>;
+  selectedKeys: string[]; // ✅ add this
   disabledOptions: Record<string, { reason: string }>;
   hiddenOptions: Record<string, { reason: string }>;
   validationErrors: string[];

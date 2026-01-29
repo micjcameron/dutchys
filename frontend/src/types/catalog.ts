@@ -1,3 +1,7 @@
+// types/catalog.ts
+
+import { GroupKey } from "./optionGroups";
+
 export type CatalogOptionGroup = {
   key: string;
   title: string;
@@ -11,8 +15,10 @@ export type CatalogOption = {
   key: string;
   groupKey: string;
   name: string;
+  subKey?: string | null;
   description: string;
   priceExcl: number;
+  priceIncl: number;
   vatRatePercent: number;
   images?: string[];
   tags?: string[];
@@ -21,50 +27,66 @@ export type CatalogOption = {
   quantityRule?: Record<string, any> | null;
 };
 
+export type OptionMap = Map<string, CatalogOption>;
+export type GetOption = (key: string) => CatalogOption | undefined;
+
+export interface CatalogContext {
+  optionMap: OptionMap;
+  getOption: GetOption;
+}
+
 export type BaseProduct = {
   id: string;
+  slug: string;
   name: string;
   description: string;
   type: string;
   shape?: string | null;
   basePriceExcl: number;
+  basePriceIncl?: number;
   vatRatePercent: number;
   images?: string[];
   attributes?: Record<string, any>;
   heatingTypes?: string[] | null;
 };
 
+// types/catalog.ts
+
+export type LedSelection = Record<string, number>;
+
 export type ConfigSelections = {
   baseProductId?: string | null;
-  answers?: {
-    hideFilterUnderStairs?: boolean | null;
-  };
+  answers?: { hideFilterUnderStairs?: boolean | null };
   touchedKeys?: string[];
+
   heaterInstallation?: { optionId?: string | null };
   cooler?: { optionId?: string | null };
   heating?: { optionId?: string | null; extras?: string[] };
-  materials?: {
-    internalMaterialId?: string | null;
-    externalMaterialId?: string | null;
-  };
+
+  materials?: { internalMaterialId?: string | null; externalMaterialId?: string | null };
   insulation?: { optionId?: string | null };
-  spa?: { systemId?: string | null; leds?: string[] };
+
+  spa?: { systemId?: string | null; leds?: LedSelection | string[] };
+
   lid?: { optionId?: string | null };
-  filtration?: {
-    connections?: string[];
-    filterId?: string | null;
-    uv?: string[];
-    sandFilterBox?: string | null;
+  filtration?: { 
+    connections?: string[]; 
+    filterId?: string | null; 
+    uv?: string[]; 
+    filterBoxId?: string | null;
   };
   stairs?: { optionId?: string | null };
   controlUnit?: { optionId?: string | null };
+  cover?: { optionId?: string | null };
   extras?: { optionIds?: string[] };
 };
+
 
 export type PriceItem = {
   type: 'base' | 'option';
   key: string;
   name: string;
+  quantity?: number;
   priceExcl: number;
   vatRatePercent: number;
   priceIncl: number;
@@ -74,12 +96,14 @@ export type PriceItem = {
 export type EvaluationResult = {
   templateKey: string;
   resolvedSelections: ConfigSelections;
+  selectedKeys: string[];
+  applicableOptionKeys?: string[];
   disabledOptions: Record<string, { reason: string }>;
   hiddenOptions: Record<string, { reason: string }>;
   requirements: Array<{ key: string; message: string }>;
   validationErrors: string[];
-  recommendations?: Array<{ key: string; reason: string; strength?: 'low' | 'med' | 'high' }>;
-  warnings?: Array<{ message: string; key?: string }>;
+  recommendations: any[];
+  warnings: any[];
   pricing: {
     totalExcl: number;
     totalIncl: number;
@@ -99,6 +123,7 @@ export type SectionKey =
   | 'LEDS'
   | 'LID'
   | 'FILTRATION'
+  | 'COVER'
   | 'SANDFILTER'
   | 'STAIRS'
   | 'CONTROLUNIT'
@@ -111,6 +136,7 @@ export type TemplateStep = {
   title: string;
   description?: string;
   config?: Record<string, any>;
+  optionGroupKeys?: GroupKey[]; // ✅ add this
 };
 
 export type ConfiguratorTemplate = {
@@ -118,3 +144,29 @@ export type ConfiguratorTemplate = {
   productTypes: string[];
   steps: TemplateStep[];
 };
+
+export type OptionGroupSubSectionDTO = {
+  key: string;
+  title: string;
+  selectionType: OptionGroupSelectionType;
+  min?: number | null;
+  max?: number | null;
+  sortOrder?: number;
+};
+
+export type OptionGroupDTO = {
+  id: string;
+  key: string;
+  title: string;
+  selectionType: OptionGroupSelectionType;
+  min: number | null;
+  max: number | null;
+  sortOrder: number;
+  subSections: OptionGroupSubSectionDTO[] | null;
+};
+
+export enum OptionGroupSelectionType {
+  SINGLE = 'SINGLE',
+  MULTI = 'MULTI',
+  BOOLEAN = 'BOOLEAN',
+}

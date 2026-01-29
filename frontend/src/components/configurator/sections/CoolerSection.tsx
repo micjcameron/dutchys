@@ -10,6 +10,7 @@ interface CoolerSectionProps {
   options: CatalogOption[];
   selections: ConfigSelections;
   onSelectionsChange: (update: (prev: ConfigSelections) => ConfigSelections) => void;
+  onAutoAdvance?: () => void;
   evaluation: EvaluationResult | null;
   isCompany: boolean;
 }
@@ -20,18 +21,23 @@ const CoolerSection = ({
   options,
   selections,
   onSelectionsChange,
+  onAutoAdvance,
   evaluation,
   isCompany,
 }: CoolerSectionProps) => {
   const selected = selections.cooler?.optionId ?? null;
 
   const toggle = (key: string) => {
+    const isSelecting = selected !== key;
     onSelectionsChange((prev) => ({
       ...prev,
       cooler: {
         optionId: prev.cooler?.optionId === key ? null : key,
       },
     }));
+    if (isSelecting) {
+      onAutoAdvance?.();
+    }
   };
 
   return (
@@ -39,7 +45,7 @@ const CoolerSection = ({
       <OptionGrid
         options={options}
         selectedKeys={selected ? [selected] : []}
-        selectionType="single"
+        selectionType="SINGLE"
         onToggle={toggle}
         disabledOptions={evaluation?.disabledOptions}
         hiddenOptions={evaluation?.hiddenOptions}
