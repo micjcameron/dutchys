@@ -1,27 +1,29 @@
+// ./sections/MaterialsSection.tsx
 'use client';
 
+import React, { useEffect, useMemo } from 'react';
 import SectionWrapper from './SectionWrapper';
 import OptionGrid from './OptionGrid';
-import type {
-  BaseProduct,
-  CatalogOption,
-  ConfigSelections,
-  EvaluationResult,
-} from '@/types/catalog';
+import type { BaseProduct, CatalogOption, ConfigSelections } from '@/types/catalog';
 
 interface MaterialsSectionProps {
   title: string;
   description?: string;
-  product: BaseProduct | null; // ✅ added
+  product: BaseProduct | null;
   internalOptions: CatalogOption[];
   externalOptions: CatalogOption[];
   selections: ConfigSelections;
   onSelectionsChange: (update: (prev: ConfigSelections) => ConfigSelections) => void;
-  evaluation: EvaluationResult | null;
   isCompany: boolean;
+
+  // ✅ FE-only validity gating (POC)
+  setSectionValidity?: (isValid: boolean) => void;
 }
 
+type OptionConstraintMap = Record<string, { reason: string }>;
 const DEBUG = process.env.NODE_ENV !== 'production';
+
+const upper = (v: unknown) => String(v ?? '').trim().toUpperCase();
 
 const MaterialsSection = ({
   title,
@@ -31,17 +33,39 @@ const MaterialsSection = ({
   externalOptions,
   selections,
   onSelectionsChange,
-  evaluation,
   isCompany,
+  setSectionValidity,
 }: MaterialsSectionProps) => {
-  const disabled = evaluation?.disabledOptions ?? {};
-  const hidden = evaluation?.hiddenOptions ?? {};
-
   const selectedInternal = selections.materials?.internalMaterialId ?? null;
   const selectedExternal = selections.materials?.externalMaterialId ?? null;
 
-  const shape = String(product?.attributes?.shape ?? (product as any)?.shape ?? '').toUpperCase();
+  const shape = upper(product?.attributes?.shape ?? (product as any)?.shape ?? '');
   const isSquare = shape === 'SQUARE';
+
+  // ✅ FE-only constraints (no evaluation)
+  const { disabled, hidden } = useMemo(() => {
+    const disabled: OptionConstraintMap = {};
+    const hidden: OptionConstraintMap = {};
+
+    // WPC only allowed for SQUARE (keep it disabled for non-square)
+    if (!isSquare) {
+      for (const opt of externalOptions ?? []) {
+        const mat = upper(opt.attributes?.material);
+        if (mat === 'WPC') {
+          disabled[opt.key] = { reason: 'Alleen voor vierkante modellen' };
+        }
+      }
+    }
+
+    return { disabled, hidden };
+  }, [externalOptions, isSquare]);
+
+  // ✅ Step validity: must have BOTH internal + external selected
+  const isValid = Boolean(selectedInternal) && Boolean(selectedExternal);
+
+  useEffect(() => {
+    setSectionValidity?.(isValid);
+  }, [isValid, setSectionValidity]);
 
   const toggleInternal = (key: string) => {
     if (disabled[key] || hidden[key]) return;
@@ -49,7 +73,7 @@ const MaterialsSection = ({
     onSelectionsChange((prev) => ({
       ...prev,
       materials: {
-        ...prev.materials,
+        ...(prev.materials ?? {}),
         internalMaterialId: prev.materials?.internalMaterialId === key ? null : key,
       },
     }));
@@ -61,7 +85,7 @@ const MaterialsSection = ({
     onSelectionsChange((prev) => ({
       ...prev,
       materials: {
-        ...prev.materials,
+        ...(prev.materials ?? {}),
         externalMaterialId: prev.materials?.externalMaterialId === key ? null : key,
       },
     }));
@@ -70,11 +94,17 @@ const MaterialsSection = ({
   if (DEBUG) {
     console.groupCollapsed('[materials] render');
     console.log('shape', shape, 'isSquare', isSquare);
-    console.log('internalOptions', internalOptions.map((o) => ({ key: o.key, attrs: o.attributes })));
-    console.log('externalOptions', externalOptions.map((o) => ({ key: o.key, attrs: o.attributes })));
-    console.log('selected', { selectedInternal, selectedExternal });
-    console.log('disabled keys', Object.keys(disabled).slice(0, 10));
-    console.log('hidden keys', Object.keys(hidden).slice(0, 10));
+    console.log('selected', { selectedInternal, selectedExternal, isValid });
+    console.log(
+      'internalOptions',
+      (internalOptions ?? []).map((o) => ({ key: o.key, attrs: o.attributes })),
+    );
+    console.log(
+      'externalOptions',
+      (externalOptions ?? []).map((o) => ({ key: o.key, attrs: o.attributes })),
+    );
+    console.log('disabled keys', Object.keys(disabled));
+    console.log('hidden keys', Object.keys(hidden));
     console.groupEnd();
   }
 
@@ -115,6 +145,12 @@ const MaterialsSection = ({
             emptyLabel="Geen buitenzijde opties beschikbaar."
           />
         </div>
+
+        {!isValid && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            Kies zowel een <b>binnenzijde</b> als <b>buitenzijde</b> om door te gaan.
+          </div>
+        )}
       </div>
     </SectionWrapper>
   );

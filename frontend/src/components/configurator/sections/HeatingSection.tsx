@@ -1,34 +1,45 @@
 'use client';
 
+import React, { useEffect, useMemo } from 'react';
 import SectionWrapper from './SectionWrapper';
 import OptionGrid from './OptionGrid';
-import type {
-  BaseProduct,
-  CatalogOption,
-  ConfigSelections,
-  EvaluationResult,
-  GetOption,
-} from '@/types/catalog';
+import type { BaseProduct, CatalogOption, ConfigSelections, GetOption } from '@/types/catalog';
 
 interface HeatingSectionProps {
   title: string;
   description?: string;
   product: BaseProduct | null;
-  options: CatalogOption[]; // HEATING_BASE only
+  options: CatalogOption[]; // HEATING_BASE only (parent passes by groupKey)
   extras: CatalogOption[]; // internal+external addon options (both groups)
   selections: ConfigSelections;
   onSelectionsChange: (update: (prev: ConfigSelections) => ConfigSelections) => void;
-  evaluation: EvaluationResult | null;
   isCompany: boolean;
   getOption: GetOption;
+
+  // ✅ FE-only gate (tooltip warning lives in parent)
+  setSectionGate?: (gate: { isValid: boolean; warning?: string | null }) => void;
 }
 
-const HEATING_GROUP_KEY = 'HEATING_BASE';
 const HEATER_ADDONS_INTERNAL = 'HEATER_ADDONS_INTERNAL';
 const HEATER_ADDONS_EXTERNAL = 'HEATER_ADDONS_EXTERNAL';
 
 type OptionConstraintMap = Record<string, { reason: string }>;
 const DEBUG = process.env.NODE_ENV !== 'production';
+
+const upper = (v: unknown) => String(v ?? '').trim().toUpperCase();
+
+type InstallType = 'EXTERNAL' | 'INTEGRATED' | '';
+type HeaterKind = 'WOOD' | 'ELECTRIC' | 'HYBRID' | '';
+
+const toInstallType = (v: unknown): InstallType => {
+  const u = upper(v);
+  return u === 'EXTERNAL' || u === 'INTEGRATED' ? (u as InstallType) : '';
+};
+
+const toHeaterKind = (v: unknown): HeaterKind => {
+  const u = upper(v);
+  return u === 'WOOD' || u === 'ELECTRIC' || u === 'HYBRID' ? (u as HeaterKind) : '';
+};
 
 const HeatingSection = ({
   title,
@@ -38,66 +49,56 @@ const HeatingSection = ({
   extras,
   selections,
   onSelectionsChange,
-  evaluation,
   isCompany,
   getOption,
+  setSectionGate,
 }: HeatingSectionProps) => {
+  // -------------------------
+  // product capability + heating types
+  // -------------------------
   const rawHeatingTypes = product?.heatingTypes;
-  const heatingTypes = Array.isArray(rawHeatingTypes)
-    ? rawHeatingTypes.map((type) => String(type).toUpperCase())
-    : null;
+  const heatingTypes = Array.isArray(rawHeatingTypes) ? rawHeatingTypes.map((t) => upper(t)) : null;
 
   const allowsIntegratedHeater = product?.attributes?.allowsIntegratedHeater !== false;
   const allowsExternalHeater = product?.attributes?.allowsExternalHeater !== false;
 
-  const disabled: OptionConstraintMap = evaluation?.disabledOptions ?? {};
-  console.log("disabled")
-  console.log(disabled)
-  const hidden: OptionConstraintMap = evaluation?.hiddenOptions ?? {};
-  console.log("hidden")
-  console.log(hidden)
+  // No backend evaluation anymore
+  const disabled: OptionConstraintMap = {};
+  const hidden: OptionConstraintMap = {};
   const isDisabled = (key: string) => Boolean(disabled[key]);
   const isHidden = (key: string) => Boolean(hidden[key]);
 
   // -------------------------
-  // Resolve installation type from GLOBAL optionMap
+  // Installation type from selections (HeaterInstallation step)
+  // NOTE: your install option uses attributes.type = EXTERNAL|INTEGRATED
   // -------------------------
   const installKey = (selections.heaterInstallation?.optionId ?? null) as string | null;
   const installOption = installKey ? getOption(installKey) : undefined;
-  const installTypeRaw = String(installOption?.attributes?.type ?? '').toUpperCase(); // EXTERNAL | INTEGRATED | ""
-  const installType =
-    installTypeRaw === 'EXTERNAL' || installTypeRaw === 'INTEGRATED' ? installTypeRaw : '';
+  const selectedInstallType: InstallType = toInstallType(installOption?.attributes?.type);
 
   // -------------------------
   // Heating base options
   // -------------------------
-  const baseHeatingOptions = options.filter((o) => o.groupKey === HEATING_GROUP_KEY);
+  const heatingOptions = useMemo(() => {
+    if (heatingTypes === null) return []; // not applicable
+    if (heatingTypes.length === 0) return []; // applicable but none
+    return (options ?? [])
+      .filter((opt) => {
+        const kind = toHeaterKind(opt.attributes?.type); // WOOD | ELECTRIC | HYBRID
+        if (!kind) return true; // permissive fallback
+        return heatingTypes.includes(kind);
+      })
+      .filter((opt) => {
+        const heaterInstallType = toInstallType(opt.attributes?.installationType); // EXTERNAL | INTEGRATED
+        if (!allowsIntegratedHeater && heaterInstallType === 'INTEGRATED') return false;
+        if (!allowsExternalHeater && heaterInstallType === 'EXTERNAL') return false;
 
-  const heatingOptions =
-    heatingTypes && heatingTypes.length > 0
-      ? baseHeatingOptions
-          // product type tags filter (your existing logic)
-          .filter((option) =>
-            option.tags?.some((tag) => heatingTypes.includes(String(tag).toUpperCase())),
-          )
-          // placement + capability + installType filter (FIX)
-          .filter((option) => {
-            const placementRaw = String(option.attributes?.placement ?? '').toUpperCase(); // INTEGRATED | EXTERNAL | ""
-            const placement =
-              placementRaw === 'EXTERNAL' || placementRaw === 'INTEGRATED' ? placementRaw : '';
+        // If user chose installation, respect it when heater declares installationType
+        if (selectedInstallType && heaterInstallType && selectedInstallType !== heaterInstallType) return false;
 
-            // capability guards
-            if (!allowsIntegratedHeater && placement === 'INTEGRATED') return false;
-            if (!allowsExternalHeater && placement === 'EXTERNAL') return false;
-
-            // ✅ respect chosen install type (if selected)
-            // If installType is empty (not chosen yet), allow both.
-            if (installType === 'INTEGRATED' && placement === 'EXTERNAL') return false;
-            if (installType === 'EXTERNAL' && placement === 'INTEGRATED') return false;
-
-            return true;
-          })
-      : [];
+        return true;
+      });
+  }, [allowsExternalHeater, allowsIntegratedHeater, heatingTypes, options, selectedInstallType]);
 
   // -------------------------
   // Selections
@@ -107,17 +108,16 @@ const HeatingSection = ({
 
   const selectedExtras = Array.isArray(selections.heating?.extras) ? selections.heating!.extras! : [];
 
-  const heatingPlacementRaw = String(selectedHeatingOption?.attributes?.placement ?? '').toUpperCase();
-  const heatingPlacement =
-    heatingPlacementRaw === 'EXTERNAL' || heatingPlacementRaw === 'INTEGRATED' ? heatingPlacementRaw : '';
+  const selectedHeaterKind: HeaterKind = toHeaterKind(selectedHeatingOption?.attributes?.type);
+  const selectedHeaterInstallType: InstallType = toInstallType(selectedHeatingOption?.attributes?.installationType);
 
-  // effective placement: prefer heating placement; fallback to installType if heating doesn’t specify
-  const effectivePlacement = heatingPlacement || installType || '';
+  // effective install type: prefer heater's own installationType, fallback to selected installation step
+  const effectiveInstallType: InstallType = selectedHeaterInstallType || selectedInstallType || '';
 
   const allowedAddonGroupKey =
-    effectivePlacement === 'EXTERNAL'
+    effectiveInstallType === 'EXTERNAL'
       ? HEATER_ADDONS_EXTERNAL
-      : effectivePlacement === 'INTEGRATED'
+      : effectiveInstallType === 'INTEGRATED'
         ? HEATER_ADDONS_INTERNAL
         : null;
 
@@ -126,19 +126,49 @@ const HeatingSection = ({
     ? (selectedHeatingOption?.attributes?.extraOptionKeys as string[]).filter(Boolean)
     : [];
 
-  // ✅ SHOW EXTRAS ONLY WHEN A HEATING OPTION IS SELECTED
-  // and only those extras that:
-  // - match the addon group for placement
-  // - are listed in the selected heating option’s extraOptionKeys
-  const availableExtras =
-    selectedHeatingKey && allowedAddonGroupKey
-      ? extras
-          .filter((o) => o.groupKey === allowedAddonGroupKey)
-          .filter((o) => extraOptionKeys.includes(o.key))
-      : [];
+  // ✅ Extras only if a WOOD heater is selected + we can resolve internal/external
+  const shouldShowExtras =
+    Boolean(selectedHeatingKey) && selectedHeaterKind === 'WOOD' && Boolean(allowedAddonGroupKey);
 
-  // ✅ If heating changes and existing extras are no longer valid, trim them
-  const normalizedSelectedExtras = selectedExtras.filter((k) => availableExtras.some((o) => o.key === k));
+  const availableExtras = useMemo(() => {
+    if (!shouldShowExtras || !allowedAddonGroupKey) return [];
+    return (extras ?? [])
+      .filter((o) => o.groupKey === allowedAddonGroupKey)
+      .filter((o) => (extraOptionKeys.length ? extraOptionKeys.includes(o.key) : true));
+  }, [allowedAddonGroupKey, extraOptionKeys, extras, shouldShowExtras]);
+
+  const normalizedSelectedExtras = useMemo(
+    () => selectedExtras.filter((k) => availableExtras.some((o) => o.key === k)),
+    [availableExtras, selectedExtras],
+  );
+
+  // ✅ Section validity: only requires a heater selected (extras do NOT matter)
+  const isValid = Boolean(selectedHeatingKey);
+
+  useEffect(() => {
+    // Only show the warning when heating is applicable and there are options to choose
+    const showWarning = heatingTypes !== null && (heatingTypes?.length ?? 0) > 0;
+
+    setSectionGate?.({
+      isValid,
+      warning: !isValid && showWarning ? 'Kies een verwarmingsoptie om door te gaan.' : null,
+    });
+  }, [isValid, setSectionGate, heatingTypes]);
+
+  // Auto-trim stale extras when availability changes (no setState during render)
+  useEffect(() => {
+    if (!selectedHeatingKey) return;
+    if (normalizedSelectedExtras.length === selectedExtras.length) return;
+
+    onSelectionsChange((prev) => ({
+      ...prev,
+      heating: {
+        ...(prev.heating ?? {}),
+        extras: normalizedSelectedExtras,
+      },
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedHeatingKey, normalizedSelectedExtras.join('|')]);
 
   // -------------------------
   // Actions
@@ -147,6 +177,7 @@ const HeatingSection = ({
     if (DEBUG) {
       console.groupCollapsed('[HEATING] toggleHeating', key);
       console.log('before selections.heating:', selections.heating);
+      console.log('selectedInstallType:', selectedInstallType);
       console.log('disabled?', isDisabled(key), disabled[key]?.reason);
       console.log('hidden?', isHidden(key), hidden[key]?.reason);
     }
@@ -163,7 +194,7 @@ const HeatingSection = ({
       const wasSelected = prev.heating?.optionId === key;
       const nextOptionKey = wasSelected ? null : key;
 
-      // Always clear extras when heating changes (prevents cross-placement leakage)
+      // ✅ Always clear extras when heating changes
       const next: ConfigSelections = {
         ...prev,
         heating: {
@@ -185,8 +216,16 @@ const HeatingSection = ({
     if (DEBUG) {
       console.groupCollapsed('[HEATING] toggleExtra', key);
       console.log('before selections.heating:', selections.heating);
-      console.log('disabled?', isDisabled(key), disabled[key]?.reason);
-      console.log('hidden?', isHidden(key), hidden[key]?.reason);
+      console.log('shouldShowExtras:', shouldShowExtras);
+      console.log('allowedAddonGroupKey:', allowedAddonGroupKey);
+    }
+
+    if (!shouldShowExtras) {
+      if (DEBUG) {
+        console.log('blocked toggle (extras not allowed)');
+        console.groupEnd();
+      }
+      return;
     }
 
     if (isDisabled(key) || isHidden(key)) {
@@ -197,7 +236,6 @@ const HeatingSection = ({
       return;
     }
 
-    // only allow toggling extras that are currently available
     if (!availableExtras.some((o) => o.key === key)) {
       if (DEBUG) {
         console.warn('[HEATING] tried to toggle non-available extra', key);
@@ -227,18 +265,9 @@ const HeatingSection = ({
     });
   };
 
-  // If we detect stale extras in state, auto-trim them once (non-destructive)
-  // This prevents “extras come back disabled / weird” when backend lags.
-  if (selectedHeatingKey && normalizedSelectedExtras.length !== selectedExtras.length) {
-    onSelectionsChange((prev) => ({
-      ...prev,
-      heating: {
-        ...(prev.heating ?? {}),
-        extras: normalizedSelectedExtras,
-      },
-    }));
-  }
-
+  // -------------------------
+  // Debug logs
+  // -------------------------
   if (DEBUG) {
     console.groupCollapsed('[HEATING] render');
     console.log('productKey:', (product as any)?.attributes?.productKey ?? (product as any)?.slug ?? '(null)');
@@ -247,21 +276,26 @@ const HeatingSection = ({
     console.log('allowsIntegratedHeater:', allowsIntegratedHeater, 'allowsExternalHeater:', allowsExternalHeater);
 
     console.log('installKey:', installKey);
-    console.log('installType:', installType);
+    console.log('selectedInstallType:', selectedInstallType);
 
     console.log('selectedHeatingKey:', selectedHeatingKey);
-    console.log('heatingPlacement:', heatingPlacement);
-    console.log('effectivePlacement:', effectivePlacement);
+    console.log('selectedHeaterKind(attributes.type):', selectedHeaterKind);
+    console.log('selectedHeaterInstallType(attributes.installationType):', selectedHeaterInstallType);
+
+    console.log('effectiveInstallType:', effectiveInstallType);
     console.log('allowedAddonGroupKey:', allowedAddonGroupKey);
 
     console.log('heatingOptions count:', heatingOptions.length);
     console.log(
-      'heatingOptions placements:',
-      heatingOptions.map((o) => [o.key, String(o.attributes?.placement ?? '').toUpperCase()]),
+      'heatingOptions:',
+      heatingOptions.map((o) => [o.key, upper(o.attributes?.type), upper(o.attributes?.installationType)]),
     );
+
+    console.log('isValid:', isValid);
 
     console.log('extras incoming:', extras.length);
     console.log('extraOptionKeys:', extraOptionKeys);
+    console.log('shouldShowExtras:', shouldShowExtras);
     console.log('availableExtras:', availableExtras.map((o) => ({ key: o.key, groupKey: o.groupKey })));
     console.log('selectedExtras:', selectedExtras);
     console.groupEnd();
@@ -290,8 +324,8 @@ const HeatingSection = ({
         />
       )}
 
-      {/* ✅ show extras only when a heating option is selected */}
-      {selectedHeatingKey && availableExtras.length > 0 && (
+      {/* Extras only when WOOD + installation resolves */}
+      {shouldShowExtras && availableExtras.length > 0 && (
         <div className="space-y-3 mt-6">
           <h3 className="text-lg font-semibold text-brand-blue">Extra&apos;s bij verwarming</h3>
           <OptionGrid

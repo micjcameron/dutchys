@@ -40,6 +40,14 @@ export class SessionsService {
     };
   }
 
+  async getSessionById(id: string) {
+    const session = await this.sessionsRepository.findById(id);
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+    return session;
+  }
+
   async updateSession(id: string, dto: UpdateSessionDto) {
     const session = await this.sessionsRepository.findById(id);
     if (!session) {

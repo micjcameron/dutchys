@@ -1,5 +1,5 @@
+import { ProductType } from '../catalog/catalog.types';
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
-import { ProductType } from '../catalog/entities/base-product.entity';
 
 @Entity('sessions')
 export class Session {

@@ -3,7 +3,6 @@ import { CatalogService } from './catalog.service';
 import { BaseProductEntity } from './entities/base-product.entity';
 import { OptionEntity } from './entities/option.entity';
 import { OptionGroupEntity } from './entities/option-group.entity';
-import { RuleEntity } from './entities/rule.entity';
 
 @Controller('api/admin/catalog')
 export class CatalogAdminController {
@@ -67,25 +66,5 @@ export class CatalogAdminController {
   @Delete('options/:id')
   deleteOption(@Param('id') id: string) {
     return this.catalogService.deleteOption(id);
-  }
-
-  @Get('rules')
-  listRules() {
-    return this.catalogService.listRules();
-  }
-
-  @Post('rules')
-  createRule(@Body() body: Partial<RuleEntity>) {
-    return this.catalogService.createRule(body);
-  }
-
-  @Patch('rules/:id')
-  updateRule(@Param('id') id: string, @Body() body: Partial<RuleEntity>) {
-    return this.catalogService.updateRule(id, body);
-  }
-
-  @Delete('rules/:id')
-  deleteRule(@Param('id') id: string) {
-    return this.catalogService.deleteRule(id);
   }
 }

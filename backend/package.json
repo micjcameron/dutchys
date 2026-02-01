@@ -10,7 +10,9 @@
     "lint": "eslint \"src/**/*.ts\" --max-warnings=0",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "db:seed": "npx ts-node scripts/seed-catalog.ts",
-    "db:reset": "bash scripts/reset-db.sh"
+    "db:reset": "bash scripts/reset-db.sh",
+    "db:up": "docker compose -f docker-compose.dev.yml up -d",
+    "db:down": "docker compose -f docker-compose.dev.yml down"
   },
   "dependencies": {
     "@mollie/api-client": "^4.0.1",

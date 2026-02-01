@@ -6,18 +6,17 @@ import { CatalogService } from './catalog.service';
 import { BaseProductEntity } from './entities/base-product.entity';
 import { OptionEntity } from './entities/option.entity';
 import { OptionGroupEntity } from './entities/option-group.entity';
-import { RuleEntity } from './entities/rule.entity';
+
+const isDev = (process.env.NODE_ENV ?? 'development') === 'development';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      BaseProductEntity,
-      OptionGroupEntity,
-      OptionEntity,
-      RuleEntity,
-    ]),
+    TypeOrmModule.forFeature([BaseProductEntity, OptionGroupEntity, OptionEntity]),
   ],
-  controllers: [CatalogPublicController, CatalogAdminController],
+  controllers: [
+    CatalogPublicController,
+    ...(isDev ? [] : [CatalogAdminController]),
+  ],
   providers: [CatalogService],
   exports: [CatalogService],
 })

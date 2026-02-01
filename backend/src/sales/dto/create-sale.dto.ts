@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ProductType } from '../../catalog/entities/base-product.entity';
+import { ProductType } from '../../catalog/catalog.types';
 
 export class CreateSaleDto {
   @IsUUID()

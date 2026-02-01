@@ -1,8 +1,9 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import SectionWrapper from './SectionWrapper';
 import OptionGrid from './OptionGrid';
-import type { CatalogOption, ConfigSelections, EvaluationResult } from '@/types/catalog';
+import type { CatalogOption, ConfigSelections } from '@/types/catalog';
 
 interface HeaterInstallationSectionProps {
   title: string;
@@ -11,8 +12,9 @@ interface HeaterInstallationSectionProps {
   selections: ConfigSelections;
   onSelectionsChange: (update: (prev: ConfigSelections) => ConfigSelections) => void;
   onAutoAdvance?: () => void;
-  evaluation: EvaluationResult | null;
   isCompany: boolean;
+
+  setSectionGate?: (gate: { isValid: boolean; warning?: string | null }) => void;
 }
 
 const HeaterInstallationSection = ({
@@ -22,19 +24,30 @@ const HeaterInstallationSection = ({
   selections,
   onSelectionsChange,
   onAutoAdvance,
-  evaluation,
   isCompany,
+  setSectionGate,
 }: HeaterInstallationSectionProps) => {
   const selected = selections.heaterInstallation?.optionId ?? null;
 
+  // ✅ valid iff any option selected
+  useEffect(() => {
+    const isValid = Boolean(selected);
+    setSectionGate?.({
+      isValid,
+      warning: isValid ? null : 'Kies een installatie-optie om door te gaan.',
+    });
+  }, [selected, setSectionGate]);
+
   const toggle = (key: string) => {
     const isSelecting = selected !== key;
+
     onSelectionsChange((prev) => ({
       ...prev,
       heaterInstallation: {
         optionId: prev.heaterInstallation?.optionId === key ? null : key,
       },
     }));
+
     if (isSelecting) onAutoAdvance?.();
   };
 
@@ -57,10 +70,9 @@ const HeaterInstallationSection = ({
         selectedKeys={selected ? [selected] : []}
         selectionType="SINGLE"
         onToggle={toggle}
-        disabledOptions={evaluation?.disabledOptions}
-        hiddenOptions={evaluation?.hiddenOptions}
         isCompany={isCompany}
       />
+      {/* ✅ no inline warning box */}
     </SectionWrapper>
   );
 };
