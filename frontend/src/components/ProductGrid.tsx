@@ -165,6 +165,22 @@ export default function ProductGrid({
       </div>
     );
   }
+  /**
+   * To use the assetImagePath function, you need to import it from @/utils/assets.ts
+    * <img
+          src={assetImagePath("options", option.key)}
+          alt={option.name}
+        />
+        <Image
+          src={assetImagePath("products", product.key)}
+          alt={product.name}
+          width={600}
+          height={320}
+          className="w-full h-48 object-cover rounded-t-2xl"
+          loading="lazy"
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
+   */
 
   return (
     <div>

@@ -12,7 +12,8 @@
     "db:seed": "npx ts-node scripts/seed-catalog.ts",
     "db:reset": "bash scripts/reset-db.sh",
     "db:up": "docker compose -f docker-compose.dev.yml up -d",
-    "db:down": "docker compose -f docker-compose.dev.yml down"
+    "db:down": "docker compose -f docker-compose.dev.yml down",
+    "assets:mkfolders": "tsx scripts/make-asset-folders.ts"
   },
   "dependencies": {
     "@mollie/api-client": "^4.0.1",
@@ -42,6 +43,7 @@
     "eslint": "^8.50.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.2.2"
   }
 }
