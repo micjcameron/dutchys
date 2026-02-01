@@ -6,7 +6,7 @@ import { createHash } from 'crypto';
 import { CatalogService } from './catalog.service';
 import { ProductType } from './catalog.types';
 
-@Controller('api/public/catalog')
+@Controller('/public/catalog')
 export class CatalogPublicController {
   constructor(private readonly catalogService: CatalogService) {}
 
