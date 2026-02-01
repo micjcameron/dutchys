@@ -11,9 +11,20 @@ services:
       - caddy_config:/config
     depends_on:
       - frontend
-      - backend
+      - backend_blue
+      - backend_green
 
-  backend:
+  backend_blue:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./env/backend.env
+    expose:
+      - "4000"
+
+  backend_green:
     build:
       context: ../backend
       dockerfile: Dockerfile

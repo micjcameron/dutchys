@@ -1,0 +1,9 @@
+# hottubensauna.nl and www -> frontend
+hottubensauna.nl, www.hottubensauna.nl {
+  reverse_proxy frontend:3000
+}
+
+# api subdomain -> pick ONE backend (blue or green)
+api.hottubensauna.nl {
+  reverse_proxy backend_blue:4000
+}
