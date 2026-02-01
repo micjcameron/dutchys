@@ -16,24 +16,36 @@ import { SessionsModule } from './sessions/sessions.module';
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get<string>('DB_HOST', 'localhost'),
-        port: config.get<number>('DB_PORT', 5432),
-        username: config.get<string>('DB_USER', 'postgres'),
-        password: config.get<string>('DB_PASSWORD', 'postgres'),
-        database: config.get<string>('DB_NAME', 'dutchys'),
-        autoLoadEntities: true,
-        ssl:
-        process.env.DB_SSL === 'true'
-          ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' }
-          : false,
-        synchronize: true,
-        
-      }),
-    }),
+      useFactory: (config: ConfigService) => {
+        const host = config.get<string>('DB_HOST');
+        const port = Number(config.get<string>('DB_PORT'));
+        const username = config.get<string>('DB_USER');
+        const password = config.get<string>('DB_PASSWORD');
+        const database = config.get<string>('DB_NAME');
+    
+        // HARD FORCE SSL (for DO managed Postgres)
+        const ssl = { rejectUnauthorized: false };
+    
+        // TEMP LOG (remove after working)
+        console.log('[DB]', { host, port, username, database, ssl: true });
+    
+        return {
+          type: 'postgres',
+          host,
+          port,
+          username,
+          password,
+          database,
+          autoLoadEntities: true,
+          synchronize: true,
+    
+          // ✅ both paths
+          ssl,
+          extra: { ssl },
+        };
+      },
+    }),    
     ThrottlerModule.forRoot({
       throttlers: [
         {
