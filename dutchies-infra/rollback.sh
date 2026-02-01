@@ -81,6 +81,14 @@ set_color "$NEW"
 log "Recreating Caddy to apply changes..."
 $COMPOSE up -d --no-build --force-recreate caddy >/dev/null
 
+# Wait for Caddy to accept connections (prevents 'connection reset by peer')
+for i in {1..20}; do
+  if curl -fsS --max-time 1 http://127.0.0.1/ >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.5
+done
+
 smoke_test
 
 if [[ "$STOP_OTHER" == "1" ]]; then
