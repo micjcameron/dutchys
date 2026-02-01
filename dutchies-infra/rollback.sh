@@ -41,15 +41,20 @@ ensure_running() {
 }
 
 smoke_test() {
-  log "Smoke test: GET /api/health"
-  # Path-based mode: Caddy should strip /api (handle_path)
-  if curl -fsS http://127.0.0.1/api/health >/dev/null; then
-    echo "✅ /api/health OK"
-  else
-    echo "❌ /api/health FAIL"
-    return 1
-  fi
+  log "Smoke test: GET /api/health (retrying)..."
+  for i in {1..20}; do
+    # Use --max-time to avoid hanging forever if Caddy is mid-restart
+    if curl -fsS --max-time 2 http://127.0.0.1/api/health >/dev/null; then
+      echo "✅ /api/health OK"
+      return 0
+    fi
+    sleep 0.5
+  done
+
+  echo "❌ /api/health FAIL"
+  return 1
 }
+
 
 log "Rollback starting..."
 CUR="$(current_color)"
