@@ -67,6 +67,21 @@ smoke_test() {
   return 1
 }
 
+wait_backend_ready() {
+  local svc="$1"
+  local port="$2"
+  log "Waiting for ${svc} to respond on /health..."
+  for i in {1..60}; do
+    if $COMPOSE exec -T "$svc" sh -lc "wget -qO- http://127.0.0.1:${port}/health >/dev/null" 2>/dev/null; then
+      log "${svc} is ready."
+      return 0
+    fi
+    sleep 1
+  done
+  echo "Timed out waiting for ${svc} readiness" >&2
+  return 1
+}
+
 log "Rollback starting..."
 CUR="$(current_color)"
 
@@ -84,6 +99,8 @@ log "Current backend: ${CUR}"
 log "Rolling back to: ${NEW} (${NEW_SVC})"
 
 ensure_running "$NEW_SVC"
+
+wait_backend_ready "$NEW_SVC" 4000
 
 log "Updating Caddyfile to point to ${NEW}..."
 set_color "$NEW"
