@@ -26,7 +26,12 @@ import { SessionsModule } from './sessions/sessions.module';
         password: config.get<string>('DB_PASSWORD', 'postgres'),
         database: config.get<string>('DB_NAME', 'dutchys'),
         autoLoadEntities: true,
+        ssl:
+        process.env.DB_SSL === 'true'
+          ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' }
+          : false,
         synchronize: true,
+        
       }),
     }),
     ThrottlerModule.forRoot({

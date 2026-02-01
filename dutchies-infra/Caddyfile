@@ -1,11 +1,11 @@
-yourdomain.com {
+hottubensauna.nl {
   reverse_proxy frontend:3000
 }
 
-www.yourdomain.com {
+www.hottubensauna.nl {
   reverse_proxy frontend:3000
 }
 
-api.yourdomain.com {
+api.hottubensauna.nl {
   reverse_proxy backend:4000
 }
