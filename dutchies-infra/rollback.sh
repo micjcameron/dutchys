@@ -3,15 +3,13 @@ set -euo pipefail
 
 COMPOSE="docker compose"
 CADDYFILE="./Caddyfile"
+CADDY_CONTAINER="dutchies-infra-caddy-1"
 
-# Set STOP_OTHER=1 to stop the backend you rolled away from after switching.
-# Example: STOP_OTHER=1 ./rollback.sh
-STOP_OTHER="${STOP_OTHER:-0}"
+STOP_OTHER="${STOP_OTHER:-0}"   # STOP_OTHER=1 ./rollback.sh
 
 log(){ echo -e "\n==> $*"; }
 die(){ echo -e "\nERROR: $*" >&2; exit 1; }
 
-# Detect which backend Caddy is currently pointing at
 current_color() {
   if grep -q "reverse_proxy backend_green:4000" "$CADDYFILE"; then
     echo "green"
@@ -22,11 +20,8 @@ current_color() {
   fi
 }
 
-# Switch Caddyfile to target color
 set_color() {
   local color="$1"
-
-  # Make it robust: replace both ways, whichever exists
   if [[ "$color" == "green" ]]; then
     sed -i 's/reverse_proxy backend_blue:4000/reverse_proxy backend_green:4000/g' "$CADDYFILE"
   else
@@ -40,21 +35,37 @@ ensure_running() {
   $COMPOSE up -d --no-build "$svc" >/dev/null
 }
 
+reload_caddy() {
+  # Prefer reload (no connection drops). Fall back to recreate if needed.
+  log "Reloading Caddy config (prefer reload, fallback recreate)..."
+
+  if docker ps --format '{{.Names}}' | grep -qx "$CADDY_CONTAINER"; then
+    if docker exec -i "$CADDY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1; then
+      log "Caddy reload succeeded."
+      return 0
+    else
+      log "Caddy reload failed; recreating container..."
+    fi
+  else
+    log "Caddy container not found; starting/recreating via compose..."
+  fi
+
+  $COMPOSE up -d --no-build --force-recreate caddy >/dev/null
+  log "Caddy recreated."
+}
+
 smoke_test() {
   log "Smoke test: GET /api/health (retrying)..."
-  for i in {1..20}; do
-    # Use --max-time to avoid hanging forever if Caddy is mid-restart
+  for i in {1..30}; do
     if curl -fsS --max-time 2 http://127.0.0.1/api/health >/dev/null; then
       echo "✅ /api/health OK"
       return 0
     fi
     sleep 0.5
   done
-
   echo "❌ /api/health FAIL"
   return 1
 }
-
 
 log "Rollback starting..."
 CUR="$(current_color)"
@@ -72,22 +83,12 @@ fi
 log "Current backend: ${CUR}"
 log "Rolling back to: ${NEW} (${NEW_SVC})"
 
-# Make sure target backend is up (so rollback is truly instant)
 ensure_running "$NEW_SVC"
 
 log "Updating Caddyfile to point to ${NEW}..."
 set_color "$NEW"
 
-log "Recreating Caddy to apply changes..."
-$COMPOSE up -d --no-build --force-recreate caddy >/dev/null
-
-# Wait for Caddy to accept connections (prevents 'connection reset by peer')
-for i in {1..20}; do
-  if curl -fsS --max-time 1 http://127.0.0.1/ >/dev/null 2>&1; then
-    break
-  fi
-  sleep 0.5
-done
+reload_caddy
 
 smoke_test
 
