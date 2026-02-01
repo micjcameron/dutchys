@@ -3,12 +3,10 @@
 }
 
 :80 {
-  # API first
-  handle /api/* {
-    reverse_proxy backend_blue:4000
+  handle_path /api/* {
+    reverse_proxy backend_green:4000
   }
 
-  # Everything else -> frontend
   handle {
     reverse_proxy frontend:3000
   }
