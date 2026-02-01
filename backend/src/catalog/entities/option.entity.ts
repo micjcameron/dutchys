@@ -8,14 +8,26 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+
 import { OptionGroupEntity } from './option-group.entity';
-import { ProductType } from './base-product.entity';
+import { ProductType } from '../catalog.types'; // adjust import path
 
 const numericTransformer = {
   to: (value?: number | null) =>
     typeof value === 'number' ? value : value ?? null,
   from: (value?: string | null) =>
     value === null || value === undefined ? null : Number(value),
+};
+
+export type OptionAppliesTo = {
+  productModelKeys?: string[];
+  productTypes?: ProductType[];
+};
+
+export type OptionQuantityRule = {
+  min: number;
+  max: number;
+  step?: number;
 };
 
 @Entity({ name: 'options' })
@@ -38,7 +50,9 @@ export class OptionEntity {
   @Column({ type: 'varchar' })
   key!: string;
 
-  // UI subsection within a group (e.g. FILTRATION_BASE -> CONNECTION/FILTER/UV)
+  /**
+   * UI subsection within a group (e.g. FILTRATION -> CONNECTION/FILTER/ADDONS)
+   */
   @Column({ type: 'varchar', nullable: true })
   subKey!: string | null;
 
@@ -48,11 +62,28 @@ export class OptionEntity {
   @Column({ type: 'text', nullable: true })
   description!: string | null;
 
-  @Column({ type: 'numeric', precision: 12, scale: 2, transformer: numericTransformer })
-  priceExcl!: number;
-
-  @Column({ type: 'numeric', precision: 12, scale: 2, transformer: numericTransformer, default: 0 })
+  /**
+   * PRICE POLICY:
+   * - priceIncl is the source of truth
+   * - priceExcl derived (still stored for convenience)
+   */
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    transformer: numericTransformer,
+    default: 0,
+  })
   priceIncl!: number;
+
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    transformer: numericTransformer,
+    default: 0,
+  })
+  priceExcl!: number;
 
   @Column({ type: 'smallint', default: 21 })
   vatRatePercent!: number;
@@ -63,10 +94,17 @@ export class OptionEntity {
   @Column({ type: 'jsonb', default: [] })
   tags!: string[];
 
-  @Column({ type: 'jsonb', default: {} })
+  /**
+   * Drives UI only. Do not treat as "hard rules engine".
+   * Examples:
+   * { installationType: "EXTERNAL" }
+   * { material: "WPC", notes: [...] }
+   * { warnings: ["..."] }
+   */
+  @Column({ type: 'jsonb', default: () => "'{}'" })
   attributes!: Record<string, unknown>;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'jsonb', default: () => "'{}'" })
   appliesTo!: OptionAppliesTo;
 
   @Column({ type: 'jsonb', nullable: true })
@@ -81,25 +119,3 @@ export class OptionEntity {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }
-
-export type OptionColorVariant = {
-  id: string;
-  name: string;
-  hex: string;
-  priceExcl: number;
-  vatRatePercent: number;
-  images?: string[];
-  sortOrder?: number;
-  isActive?: boolean;
-};
-
-export type OptionAppliesTo = {
-  productModelKeys?: string[];
-  productTypes?: ProductType[];
-};
-
-export type OptionQuantityRule = {
-  min: number;
-  max: number;
-  step?: number;
-};

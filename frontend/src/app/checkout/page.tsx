@@ -10,7 +10,7 @@ import OrderSummary from '@/components/checkout/OrderSummary';
 import { loadCart, setCartId, setLastPaymentId } from '@/utils/localStorage';
 import { createCart, createPayment, createSale } from '@/api/checkoutApi';
 import { updateCart } from '@/api/cartApi';
-import { CartItem, CartSummaryEntry, CheckoutFormData } from '@/types/checkout';
+import { ApiProductType, CartItem, CartSummaryEntry, CheckoutFormData } from '@/types/checkout';
 import { fetchCatalog } from '@/api/catalogApi';
 import { toPriceExcl } from '@/utils/price-util';
 
@@ -27,6 +27,18 @@ const toExcl = (value: number, vatRatePercent = 21) =>
 const formatAmountValue = (value: number) => value.toFixed(2);
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8081';
 const siteBaseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+const toApiProductType = (value?: CartItem['productType']): ApiProductType | undefined => {
+  if (value === 'sauna') {
+    return 'SAUNA';
+  }
+  if (value === 'coldPlunge') {
+    return 'COLD_PLUNGE';
+  }
+  if (value === 'hottub') {
+    return 'HOTTUB';
+  }
+  return undefined;
+};
 
 const defaultForm: CheckoutFormData = {
   firstName: '',
@@ -171,19 +183,22 @@ export default function CheckoutPage() {
         console.info('[checkout] cart updated', { cartId });
       }
 
-      const productTypePayload = cartProductType ? cartProductType.toUpperCase() : undefined;
+      const productTypePayload = toApiProductType(cartProductType);
       console.info('[checkout] creating sale', { cartId, productType: productTypePayload });
       const sale = await createSale({ ...formData, cartId, productType: productTypePayload });
       console.info('[checkout] sale created', { saleId: sale?.id, cartId });
 
       console.info('[checkout] creating payment', { cartId, saleId: sale?.id });
       const payment = await createPayment({
-        cartId,
-        saleId: sale?.id,
-        amount: formatAmountValue(subtotalIncl),
+        amountValue: formatAmountValue(subtotalIncl),
+        currency: 'EUR',
         description: 'Dutchys order',
         redirectUrl: siteBaseUrl ? `${siteBaseUrl}/payment-success` : `${apiBaseUrl}/payment-success`,
         webhookUrl: `${apiBaseUrl}/payments/webhook`,
+        metadata: {
+          cartId,
+          saleId: sale?.id ?? null,
+        },
       });
       console.info('[checkout] payment created', { paymentId: payment?.id });
       setLastPaymentId(payment.id);
@@ -211,10 +226,16 @@ export default function CheckoutPage() {
             </div>
 
             <CheckoutForm
-              formData={formData}
-              setFormData={setFormData}
-              errorMessage={errorMessage}
+              value={formData}
+              isSubmitting={isSubmitting}
+              onChange={setFormData}
+              onSubmit={handleCheckout}
             />
+            {errorMessage && (
+              <p className="mt-4 text-sm text-red-600" role="alert">
+                {errorMessage}
+              </p>
+            )}
           </section>
 
           <aside className="w-full lg:w-96">
@@ -223,8 +244,6 @@ export default function CheckoutPage() {
               subtotalIncl={subtotalIncl}
               subtotalExcl={subtotalExcl}
               vatTotal={vatTotal}
-              isSubmitting={isSubmitting}
-              onSubmit={handleCheckout}
             />
           </aside>
         </div>

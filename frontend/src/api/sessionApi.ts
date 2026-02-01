@@ -17,6 +17,12 @@ export const createSession = async () => {
   return handleJsonResponse(response);
 };
 
+export const getSessionById = async (sessionId: string) => {
+  const response = await fetch(`${API_BASE_URL}/sessions/${sessionId}`);
+
+  return handleJsonResponse(response);
+};
+
 export const updateSession = async (
   sessionId: string,
   payload: {

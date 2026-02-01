@@ -2,19 +2,33 @@ import { CheckoutFormData } from '@/types/checkout';
 import { Button } from '@/components/ui/button';
 
 type CheckoutFormProps = {
-  value: CheckoutFormData;
+  value?: CheckoutFormData;
   isSubmitting: boolean;
   onChange: (next: CheckoutFormData) => void;
   onSubmit: () => void;
+};
+
+const emptyForm: CheckoutFormData = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  street: '',
+  houseNumber: '',
+  postalCode: '',
+  city: '',
+  country: 'Nederland',
+  deliveryNotes: '',
 };
 
 const inputClassName =
   'w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-brand-orange focus:outline-none focus:ring-2 focus:ring-brand-orange/30';
 
 export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }: CheckoutFormProps) {
+  const safeValue = value ?? emptyForm;
   const updateField = (field: keyof CheckoutFormData, nextValue: string) => {
     onChange({
-      ...value,
+      ...safeValue,
       [field]: nextValue,
     });
   };
@@ -38,7 +52,7 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
           <input
             type="text"
             className={inputClassName}
-            value={value.firstName}
+            value={safeValue.firstName}
             onChange={(event) => updateField('firstName', event.target.value)}
             required
           />
@@ -48,7 +62,7 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
           <input
             type="text"
             className={inputClassName}
-            value={value.lastName}
+            value={safeValue.lastName}
             onChange={(event) => updateField('lastName', event.target.value)}
             required
           />
@@ -58,7 +72,7 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
           <input
             type="email"
             className={inputClassName}
-            value={value.email}
+            value={safeValue.email}
             onChange={(event) => updateField('email', event.target.value)}
             required
           />
@@ -68,7 +82,7 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
           <input
             type="tel"
             className={inputClassName}
-            value={value.phone}
+            value={safeValue.phone}
             onChange={(event) => updateField('phone', event.target.value)}
           />
         </div>
@@ -82,7 +96,7 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
             <input
               type="text"
               className={inputClassName}
-              value={value.street}
+              value={safeValue.street}
               onChange={(event) => updateField('street', event.target.value)}
               required
             />
@@ -92,7 +106,7 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
             <input
               type="text"
               className={inputClassName}
-              value={value.houseNumber}
+              value={safeValue.houseNumber}
               onChange={(event) => updateField('houseNumber', event.target.value)}
               required
             />
@@ -102,7 +116,7 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
             <input
               type="text"
               className={inputClassName}
-              value={value.postalCode}
+              value={safeValue.postalCode}
               onChange={(event) => updateField('postalCode', event.target.value)}
               required
             />
@@ -112,7 +126,7 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
             <input
               type="text"
               className={inputClassName}
-              value={value.city}
+              value={safeValue.city}
               onChange={(event) => updateField('city', event.target.value)}
               required
             />
@@ -122,7 +136,7 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
             <input
               type="text"
               className={inputClassName}
-              value={value.country}
+              value={safeValue.country}
               onChange={(event) => updateField('country', event.target.value)}
               required
             />
@@ -134,7 +148,7 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
         <label className="text-sm font-medium text-gray-700">Bezorgnotities (optioneel)</label>
         <textarea
           className={`${inputClassName} min-h-[120px]`}
-          value={value.deliveryNotes}
+          value={safeValue.deliveryNotes}
           onChange={(event) => updateField('deliveryNotes', event.target.value)}
         />
       </div>

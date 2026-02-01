@@ -6,7 +6,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ProductType } from './base-product.entity';
+
+import { ProductType } from '../catalog.types'; // adjust import path
 
 export enum OptionGroupSelectionType {
   SINGLE = 'SINGLE',
@@ -15,17 +16,12 @@ export enum OptionGroupSelectionType {
 }
 
 export type OptionGroupSubSection = {
-  key: string;                 // e.g. "CONNECTION", "FILTER", "UV"
-  title: string;               // e.g. "Verbindingen"
+  key: string; // e.g. "CONNECTION", "FILTER", "ADDONS"
+  title: string; // e.g. "Verbindingen"
   selectionType: OptionGroupSelectionType; // SINGLE/MULTI/BOOLEAN
-  min?: number | null;
-  max?: number | null;
-  sortOrder?: number;
 };
 
-
 @Entity({ name: 'option_groups' })
-@Index(['sortOrder', 'isActive'])
 export class OptionGroupEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -40,26 +36,22 @@ export class OptionGroupEntity {
   @Column({ type: 'enum', enum: OptionGroupSelectionType })
   selectionType!: OptionGroupSelectionType;
 
-  @Column({ type: 'int', nullable: true })
-  min!: number | null;
-
-  @Column({ type: 'int', nullable: true })
-  max!: number | null;
-
-  @Column({ type: 'int', default: 0 })
-  sortOrder!: number;
-
+  /**
+   * Optional: UI subsections/buckets inside a group.
+   * Example for filtration group:
+   * - CONNECTION
+   * - FILTER
+   * - ADDONS
+   */
   @Column({ type: 'jsonb', nullable: true })
   subSections!: OptionGroupSubSection[] | null;
+
   /**
-   * This is fine as jsonb for now (fast + flexible).
+   * Fast + flexible.
    * If later you want strict relational modeling, make a join table.
    */
   @Column({ type: 'jsonb', default: [] })
   productTypes!: ProductType[];
-
-  @Column({ type: 'boolean', default: true })
-  isActive!: boolean;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;

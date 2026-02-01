@@ -1,14 +1,13 @@
+// src/catalog/catalog.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
-import { ProductType } from './entities/base-product.entity';
-import { evaluateTemplate, SelectionInput } from './engine/evaluateTemplate';
 import { getTemplateForProductType } from './templates/templates';
 import { BaseProductEntity } from './entities/base-product.entity';
 import { OptionEntity } from './entities/option.entity';
 import { OptionGroupEntity } from './entities/option-group.entity';
-import { RuleEntity, RuleScope } from './entities/rule.entity';
+import { ProductType } from './catalog.types';
 
 const CACHE_TTL_MS = 60_000;
 
@@ -16,7 +15,24 @@ type CatalogSnapshot = {
   baseProducts: BaseProductEntity[];
   optionGroups: OptionGroupEntity[];
   options: OptionEntity[];
-  rules: RuleEntity[];
+};
+
+type PublicOption = {
+  id: string;
+  key: string;
+  subKey: string | null;
+  name: string;
+  description: string | null;
+  priceExcl: number;
+  priceIncl: number;
+  vatRatePercent: number;
+  images: string[];
+  tags: string[];
+  attributes: Record<string, unknown>;
+  appliesTo: unknown;
+  quantityRule: unknown;
+  groupKey: string;
+  isActive: boolean;
 };
 
 @Injectable()
@@ -30,8 +46,6 @@ export class CatalogService {
     private readonly optionGroupsRepository: Repository<OptionGroupEntity>,
     @InjectRepository(OptionEntity)
     private readonly optionsRepository: Repository<OptionEntity>,
-    @InjectRepository(RuleEntity)
-    private readonly rulesRepository: Repository<RuleEntity>,
   ) {}
 
   private async getCatalogSnapshot(type?: ProductType): Promise<CatalogSnapshot> {
@@ -41,19 +55,20 @@ export class CatalogService {
       return cached.data;
     }
 
-    const [baseProducts, optionGroups, options, rules] = await Promise.all([
+    const [baseProducts, optionGroups, options] = await Promise.all([
       this.baseProductsRepository.find({
         where: {
           isActive: true,
           ...(type ? { type } : {}),
         },
       }),
-      this.optionGroupsRepository.find({ where: { isActive: true } }),
+      // Option groups no longer have isActive
+      this.optionGroupsRepository.find(),
+      // Options still have isActive
       this.optionsRepository.find({ where: { isActive: true } }),
-      this.rulesRepository.find({ where: { isActive: true } }),
     ]);
 
-    const snapshot = { baseProducts, optionGroups, options, rules };
+    const snapshot: CatalogSnapshot = { baseProducts, optionGroups, options };
     this.cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, data: snapshot });
     return snapshot;
   }
@@ -69,11 +84,9 @@ export class CatalogService {
     );
   }
 
-  private mapOptionsWithGroupKey(
-    options: OptionEntity[],
-    groups: OptionGroupEntity[],
-  ) {
+  private mapOptionsWithGroupKey(options: OptionEntity[], groups: OptionGroupEntity[]): PublicOption[] {
     const groupKeyById = new Map(groups.map((group) => [group.id, group.key]));
+
     return options
       .filter((option) => option.groupId && groupKeyById.has(option.groupId))
       .map((option) => ({
@@ -95,49 +108,21 @@ export class CatalogService {
       }));
   }
 
-  private filterRulesForContext(
-    rules: RuleEntity[],
-    context: { product?: BaseProductEntity; groupKeys?: Set<string> },
-  ) {
-    const { product, groupKeys } = context;
-    return rules.filter((rule) => {
-      if (!rule.isActive) {
-        return false;
-      }
-      if (rule.scope === RuleScope.GLOBAL) {
-        return true;
-      }
-      if (rule.scope === RuleScope.PRODUCT_TYPE) {
-        return !!product && rule.scopeRef === product.type;
-      }
-      if (rule.scope === RuleScope.PRODUCT) {
-        return !!product && rule.scopeRef === product.id;
-      }
-      if (rule.scope === RuleScope.GROUP) {
-        return !!groupKeys && !!rule.scopeRef && groupKeys.has(rule.scopeRef);
-      }
-      return false;
-    });
-  }
-
   async getPublicCatalog(type?: ProductType) {
     const snapshot = await this.getCatalogSnapshot(type);
+
     const optionGroups = this.filterGroupsByType(snapshot.optionGroups, type);
-    const groupKeys = new Set(optionGroups.map((group) => group.key));
     const groupIds = new Set(optionGroups.map((group) => group.id));
+
     const options = this.mapOptionsWithGroupKey(
       snapshot.options.filter((option) => option.groupId && groupIds.has(option.groupId)),
       optionGroups,
     );
-    const rules = type
-      ? this.filterRulesForContext(snapshot.rules, { product: { type } as BaseProductEntity, groupKeys })
-      : snapshot.rules;
 
     return {
       baseProducts: snapshot.baseProducts,
       optionGroups,
       options,
-      rules,
     };
   }
 
@@ -157,6 +142,7 @@ export class CatalogService {
         ...(type ? { type } : {}),
       },
     });
+
     return products.map((product) => ({ id: product.id, slug: product.slug }));
   }
 
@@ -168,45 +154,14 @@ export class CatalogService {
       : await this.baseProductsRepository.findOne({
           where: { slug: id, isActive: true },
         });
+
     if (!product) {
       throw new NotFoundException('Product not found');
     }
     return product;
   }
 
-  async evaluateConfiguration(productId: string, selections: SelectionInput) {
-    const product = await this.baseProductsRepository.findOne({
-      where: { id: productId, isActive: true },
-    });
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
-
-    const snapshot = await this.getCatalogSnapshot(product.type);
-    const optionGroups = this.filterGroupsByType(snapshot.optionGroups, product.type);
-    const groupKeys = new Set(optionGroups.map((group) => group.key));
-    const groupIds = new Set(optionGroups.map((group) => group.id));
-    const options = this.mapOptionsWithGroupKey(
-      snapshot.options.filter((option) => option.groupId && groupIds.has(option.groupId)),
-      optionGroups,
-    );
-    const rules = this.filterRulesForContext(snapshot.rules, { product, groupKeys });
-
-    const template = getTemplateForProductType(product.type);
-    if (!template) {
-      throw new NotFoundException('Template not found');
-    }
-
-    const flattenedSelections = this.flattenSelectionsToGroupInput(selections, options);
-
-
-    return evaluateTemplate({
-      product,
-      selections: flattenedSelections as any,
-      template,
-      catalog: { groups: optionGroups, options },
-    });
-  }
+  // ---- admin CRUD helpers ----
 
   async listBaseProducts() {
     return this.baseProductsRepository.find();
@@ -261,65 +216,4 @@ export class CatalogService {
     await this.optionsRepository.delete(id);
     return { id };
   }
-
-  async listRules() {
-    return this.rulesRepository.find();
-  }
-
-  async createRule(data: Partial<RuleEntity>) {
-    return this.rulesRepository.save(this.rulesRepository.create(data));
-  }
-
-  async updateRule(id: string, data: Partial<RuleEntity>) {
-    await this.rulesRepository.save({ id, ...(data as DeepPartial<RuleEntity>) });
-    return this.rulesRepository.findOne({ where: { id } });
-  }
-
-  async deleteRule(id: string) {
-    await this.rulesRepository.delete(id);
-    return { id };
-  }
-
-  private flattenSelectionsToGroupInput(
-    raw: any,
-    options: Array<{ key: string; groupKey: string }>,
-  ): SelectionInput {
-    const optionToGroup = new Map(options.map((o) => [o.key, o.groupKey]));
-    const out: Record<string, string[]> = {};
-  
-    const add = (optionKey: string) => {
-      const groupKey = optionToGroup.get(optionKey);
-      if (!groupKey) return;
-  
-      if (!out[groupKey]) out[groupKey] = [];
-      out[groupKey].push(optionKey); // keep duplicates (quantity / repeated keys model)
-    };
-  
-    const walk = (v: any) => {
-      if (v == null) return;
-  
-      if (typeof v === 'string') {
-        add(v);
-        return;
-      }
-  
-      if (Array.isArray(v)) {
-        for (const item of v) walk(item);
-        return;
-      }
-  
-      if (typeof v === 'object') {
-        for (const val of Object.values(v)) walk(val);
-        return;
-      }
-  
-      // ignore booleans/numbers/etc.
-    };
-  
-    walk(raw);
-  
-    // ensure all groups exist (optional – evaluator can handle missing keys)
-    return out;
-  }
-  
 }

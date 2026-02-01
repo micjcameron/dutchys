@@ -1,5 +1,4 @@
-import { OptionGroupKey } from '../catalog-option-seed.types';
-import { ProductType } from '../entities/base-product.entity';
+import { OptionGroupKey, ProductType } from '../catalog.types';
 import { ConfiguratorTemplate } from './template.types';
 
 
@@ -30,7 +29,7 @@ const STEPS: Record<string, StepWithGroups> = {
     section: 'HEATING',
     title: 'Verwarming',
     description: 'Kies uw verwarmingssysteem',
-    optionGroupKeys: [OptionGroupKey.HEATING_BASE],
+    optionGroupKeys: [OptionGroupKey.HEATING_BASE,OptionGroupKey.HEATER_ADDONS_EXTERNAL,OptionGroupKey.HEATER_ADDONS_INTERNAL],
   },
 
   COOLER: {
@@ -90,7 +89,8 @@ const STEPS: Record<string, StepWithGroups> = {
     title: 'Filtratie',
     description: 'Kies uw filtratie',
     optionGroupKeys: [
-      OptionGroupKey.FILTRATION_BASE,
+      OptionGroupKey.FILTRATION_FILTER_BASE,
+      OptionGroupKey.FILTRATION_CONNECTOR_BASE,
       OptionGroupKey.FILTRATION_ADDONS,
       OptionGroupKey.FILTRATION_BOX,
     ],

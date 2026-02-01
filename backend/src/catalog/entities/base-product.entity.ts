@@ -7,17 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-export enum HeatingType {
-  WOOD = 'WOOD',
-  ELECTRIC = 'ELECTRIC',
-  HYBRID = 'HYBRID',
-}
-
-export enum ProductType {
-  HOTTUB = 'HOTTUB',
-  SAUNA = 'SAUNA',
-  COLD_PLUNGE = 'COLD_PLUNGE',
-}
+import { BaseShape, HeatingType, ProductType } from '../catalog.types'; // adjust import path
 
 const numericTransformer = {
   to: (value?: number | null) =>
@@ -33,9 +23,17 @@ export class BaseProductEntity {
   id!: string;
 
   /**
-   * Slug is ideal for stable URLs:
+   * Canonical business key used by configurator + frontend + appliesTo.productModelKeys.
+   * DO NOT change this once published, unless you also migrate related references.
+   */
+  @Index({ unique: true })
+  @Column({ type: 'varchar' })
+  key!: string;
+
+  /**
+   * Slug for stable URLs:
    * - /products/ofuro instead of /products/<uuid>
-   * - can keep public URLs stable even if DB ids change
+   * - keep public URLs stable even if DB ids change
    */
   @Index({ unique: true })
   @Column({ type: 'varchar' })
@@ -44,8 +42,8 @@ export class BaseProductEntity {
   @Column({ type: 'enum', enum: ProductType })
   type!: ProductType;
 
-  @Column({ type: 'varchar', nullable: true })
-  shape!: string | null;
+  @Column({ type: 'enum', enum: BaseShape, nullable: true })
+  shape!: BaseShape | null;
 
   @Column({ type: 'varchar' })
   name!: string;
@@ -53,22 +51,48 @@ export class BaseProductEntity {
   @Column({ type: 'text' })
   description!: string;
 
+  /**
+   * Optional: for SAUNA/cold plunge you might use this.
+   * For hottubs you can leave null and drive everything via options.
+   */
   @Column({ type: 'enum', enum: HeatingType, array: true, nullable: true })
   heatingTypes!: HeatingType[] | null;
 
-  @Column({ type: 'numeric', precision: 12, scale: 2, transformer: numericTransformer })
-  basePriceExcl!: number;
-
-  @Column({ type: 'numeric', precision: 12, scale: 2, transformer: numericTransformer, default: 0 })
+  /**
+   * PRICE POLICY:
+   * - priceIncl is the source of truth (what customer sees)
+   * - priceExcl is derived (store for reporting / convenience if you want)
+   */
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    transformer: numericTransformer,
+    default: 0,
+  })
   basePriceIncl!: number;
 
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    transformer: numericTransformer,
+    default: 0,
+  })
+  basePriceExcl!: number;
+
   /**
-   * Store VAT as integer percent (e.g. 21) to match how humans think.
+   * Store VAT as integer percent (e.g. 21).
    * Convert in code: vatMultiplier = vatRatePercent / 100
    */
   @Column({ type: 'smallint', default: 21 })
   vatRatePercent!: number;
 
+  /**
+   * Flexible bucket for product model flags/dimensions.
+   * Example:
+   * { diameterCm: 200, allowsIntegratedHeater: true, allowsExternalHeater: true }
+   */
   @Column({ type: 'jsonb', default: {} })
   attributes!: Record<string, unknown>;
 

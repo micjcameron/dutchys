@@ -1,19 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Headers,
-  Param,
-  Post,
-  Query,
-  Res,
-} from '@nestjs/common';
+// src/catalog/catalog-public.controller.ts
+import { Controller, Get, Headers, Param, Query, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { createHash } from 'crypto';
-import { ProductType } from './entities/base-product.entity';
 import { CatalogService } from './catalog.service';
-import { EvaluateCatalogDto } from './dto/evaluate-catalog.dto';
+import { ProductType } from './catalog.types';
 
 @Controller('api/public/catalog')
 export class CatalogPublicController {
@@ -23,11 +14,13 @@ export class CatalogPublicController {
     if (!value) {
       return undefined;
     }
+
     const normalized = value
       .trim()
       .toUpperCase()
       .replace(/\s+/g, '_')
       .replace(/-/g, '_');
+
     if (
       normalized === 'COLDPLUNGE' ||
       normalized === 'COLD_PLUNGE' ||
@@ -38,12 +31,15 @@ export class CatalogPublicController {
     ) {
       return ProductType.COLD_PLUNGE;
     }
+
     if (normalized === 'HOT_TUB' || normalized === 'HOTTUB') {
       return ProductType.HOTTUB;
     }
+
     if (normalized === 'SAUNA' || normalized === 'SAUNAS') {
       return ProductType.SAUNA;
     }
+
     return normalized as ProductType;
   }
 
@@ -66,12 +62,6 @@ export class CatalogPublicController {
     }
 
     return payload;
-  }
-
-  @Post('evaluate')
-  @Throttle({ default: { limit: 60, ttl: 60 } })
-  async evaluate(@Body() dto: EvaluateCatalogDto) {
-    return this.catalogService.evaluateConfiguration(dto.productId, (dto.selections ?? {}) as any);
   }
 
   @Get('products')

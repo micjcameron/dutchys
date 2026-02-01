@@ -1,7 +1,10 @@
+export type UiProductType = 'hottub' | 'sauna' | 'coldPlunge';
+export type ApiProductType = 'HOTTUB' | 'SAUNA' | 'COLD_PLUNGE';
+
 export type CartItem = {
   id?: string;
   type?: 'product' | 'configurator';
-  productType?: 'hottub' | 'sauna' | 'coldPlunge';
+  productType?: UiProductType;
   productId?: string;
   quantity: number;
   title?: string;
@@ -18,7 +21,7 @@ export type CartItem = {
 export type CartSummaryEntry = {
   cartKey: string;
   type: 'product' | 'configurator';
-  productType?: 'hottub' | 'sauna' | 'coldPlunge';
+  productType?: UiProductType;
   title: string;
   quantity: number;
   priceIncl: number;

@@ -1,23 +1,28 @@
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
 import SectionWrapper from './SectionWrapper';
 import OptionGrid from './OptionGrid';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/components/configurator/utils/pricing';
-import type { CatalogOption, ConfigSelections, EvaluationResult } from '@/types/catalog';
+import type { BaseProduct, CatalogOption, ConfigSelections } from '@/types/catalog';
 
 interface LedsSectionProps {
   title: string;
   description?: string;
+  product: BaseProduct | null;
   options: CatalogOption[];
   selections: ConfigSelections;
   onSelectionsChange: (update: (prev: ConfigSelections) => ConfigSelections) => void;
-  evaluation: EvaluationResult | null;
+  evaluation?: any;
   isCompany: boolean;
+
+  // LEDs are optional => always valid
+  setSectionGate?: (gate: { isValid: boolean; warning?: string | null }) => void;
 }
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
+const upper = (v: unknown) => String(v ?? '').trim().toUpperCase();
 
 type QtyMap = Record<string, number>;
 
@@ -49,40 +54,52 @@ const toQtyMap = (value: unknown): QtyMap => {
 const qtyMapToArray = (map: QtyMap): string[] =>
   Object.entries(map).flatMap(([key, qty]) => Array.from({ length: qty }, () => key));
 
-const hasTag = (opt: CatalogOption, tag: string) =>
-  (opt.tags ?? []).some((t) => String(t).toUpperCase() === tag.toUpperCase());
+type LedKind = 'BAND' | 'INDIVIDUAL' | 'INSTALLATION' | 'OTHER';
 
-/**
- * UI bucketing rules:
- * - tags are authoritative (LED_BAND / LED_STRIP / INDIVIDUAL)
- * - fallback to attributes.type for legacy
- */
-const getLedKind = (opt: CatalogOption): 'BAND' | 'STRIP' | 'INDIVIDUAL' | 'OTHER' => {
-  if (hasTag(opt, 'LED_BAND')) return 'BAND';
-  if (hasTag(opt, 'LED_STRIP')) return 'STRIP';
-  if (hasTag(opt, 'INDIVIDUAL')) return 'INDIVIDUAL';
-
-  const attrType = String(opt.attributes?.type ?? '').toUpperCase();
-  if (attrType === 'BAND' || attrType === 'STRIP' || attrType === 'INDIVIDUAL') return attrType;
-
+const getLedKind = (opt: CatalogOption): LedKind => {
+  const t = upper(opt.attributes?.type);
+  if (t === 'BAND' || t === 'INDIVIDUAL' || t === 'INSTALLATION') return t as LedKind;
   return 'OTHER';
 };
 
-type Bucket = 'STRIP' | 'BAND';
+type Bucket = 'BAND' | 'INSTALLATION';
+
+const getProductModelKey = (product: BaseProduct | null) => {
+  return upper(
+    (product as any)?.attributes?.productKey ??
+      (product as any)?.key ??
+      (product as any)?.slug ??
+      '',
+  );
+};
+
+const appliesToProductModel = (opt: CatalogOption, productModelKey: string) => {
+  const modelKeys = (opt.appliesTo as any)?.productModelKeys as string[] | undefined;
+
+  // no restriction => show always
+  if (!Array.isArray(modelKeys) || modelKeys.length === 0) return true;
+
+  // restricted but we can't resolve current product key => hide
+  if (!productModelKey) return false;
+
+  return modelKeys.map(upper).includes(productModelKey);
+};
 
 const LedsSection = ({
   title,
   description,
+  product,
   options,
   selections,
   onSelectionsChange,
   evaluation,
   isCompany,
+  setSectionGate,
 }: LedsSectionProps) => {
   const hidden = evaluation?.hiddenOptions ?? {};
   const disabled = evaluation?.disabledOptions ?? {};
 
-  const visibleOptions = useMemo(() => options.filter((o) => !hidden[o.key]), [options, hidden]);
+  const productModelKey = useMemo(() => getProductModelKey(product), [product]);
 
   const qtyMap = useMemo(() => toQtyMap(selections.spa?.leds as any), [selections.spa?.leds]);
 
@@ -91,21 +108,33 @@ const LedsSection = ({
     return !!qr && typeof qr.min === 'number' && typeof qr.max === 'number';
   }, []);
 
+  // LEDs are OPTIONAL => always valid
+  useEffect(() => {
+    setSectionGate?.({ isValid: true, warning: null });
+  }, [setSectionGate]);
+
+  // first hide rule-hidden, then apply appliesTo filtering
+  const visibleOptions = useMemo(() => {
+    return (options ?? [])
+      .filter((o) => !hidden[o.key])
+      .filter((o) => appliesToProductModel(o, productModelKey));
+  }, [options, hidden, productModelKey]);
+
   // -------------------------
   // Buckets
   // -------------------------
+  const installationOptions = useMemo(
+    () => visibleOptions.filter((o) => !hasQtyRule(o) && getLedKind(o) === 'INSTALLATION'),
+    [visibleOptions, hasQtyRule],
+  );
+
   const bandOptions = useMemo(
     () => visibleOptions.filter((o) => !hasQtyRule(o) && getLedKind(o) === 'BAND'),
     [visibleOptions, hasQtyRule],
   );
 
-  const stripOptions = useMemo(
-    () => visibleOptions.filter((o) => !hasQtyRule(o) && getLedKind(o) === 'STRIP'),
-    [visibleOptions, hasQtyRule],
-  );
-
+  const installationKeys = useMemo(() => installationOptions.map((o) => o.key), [installationOptions]);
   const bandKeys = useMemo(() => bandOptions.map((o) => o.key), [bandOptions]);
-  const stripKeys = useMemo(() => stripOptions.map((o) => o.key), [stripOptions]);
 
   const individualQtyOptions = useMemo(
     () => visibleOptions.filter((o) => hasQtyRule(o) && getLedKind(o) === 'INDIVIDUAL'),
@@ -117,11 +146,97 @@ const LedsSection = ({
       visibleOptions.filter((o) => {
         if (hasQtyRule(o)) return false;
         const kind = getLedKind(o);
-        // only show things that aren't STRIP or BAND in the fallback bucket
-        return kind !== 'BAND' && kind !== 'STRIP';
+        return kind !== 'BAND' && kind !== 'INSTALLATION';
       }),
     [visibleOptions, hasQtyRule],
   );
+
+  // -------------------------
+  // Included defaults (root-level `included: true`)
+  //
+  // Apply defaults ONLY if nothing is selected in that bucket.
+  // Never override a user's existing selection.
+  // -------------------------
+  useEffect(() => {
+    // If there are no visible options, nothing to default
+    if (visibleOptions.length === 0) return;
+
+    const nextMap = toQtyMap(selections.spa?.leds as any);
+    let changed = false;
+
+    const hasAnySelected = (keys: string[]) => keys.some((k) => (nextMap[k] ?? 0) > 0);
+
+    // INSTALLATION bucket default
+    if (installationOptions.length > 0 && !hasAnySelected(installationKeys)) {
+      const def = installationOptions.find((o) => Boolean((o as any).included));
+      if (def) {
+        nextMap[def.key] = 1;
+        changed = true;
+      }
+    }
+
+    // BAND bucket default
+    if (bandOptions.length > 0 && !hasAnySelected(bandKeys)) {
+      const def = bandOptions.find((o) => Boolean((o as any).included));
+      if (def) {
+        nextMap[def.key] = 1;
+        changed = true;
+      }
+    }
+
+    // OTHER tick-style defaults (multi)
+    // Only add included ones if they’re not already selected.
+    if (otherTickOptions.length > 0) {
+      for (const o of otherTickOptions) {
+        if (!Boolean((o as any).included)) continue;
+        if ((nextMap[o.key] ?? 0) > 0) continue;
+        nextMap[o.key] = 1;
+        changed = true;
+      }
+    }
+
+    if (!changed) return;
+
+    onSelectionsChange((prev) => ({
+      ...prev,
+      spa: {
+        ...(prev.spa ?? {}),
+        leds: qtyMapToArray(nextMap),
+      },
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    // Key change triggers:
+    productModelKey,
+    visibleOptions.map((o) => o.key).join('|'),
+  ]);
+
+  // -------------------------
+  // Trim stale selections if product changes and some LEDs are no longer visible
+  // -------------------------
+  useEffect(() => {
+    const visibleKeySet = new Set(visibleOptions.map((o) => o.key));
+    const current = toQtyMap(selections.spa?.leds as any);
+
+    let changed = false;
+    for (const k of Object.keys(current)) {
+      if (!visibleKeySet.has(k)) {
+        delete current[k];
+        changed = true;
+      }
+    }
+
+    if (!changed) return;
+
+    onSelectionsChange((prev) => ({
+      ...prev,
+      spa: {
+        ...(prev.spa ?? {}),
+        leds: qtyMapToArray(current),
+      },
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productModelKey, visibleOptions.map((o) => o.key).join('|')]);
 
   // -------------------------
   // Quantity setter (INDIVIDUAL)
@@ -153,10 +268,9 @@ const LedsSection = ({
   };
 
   // -------------------------
-  // Exclusive toggle within ONE bucket only
-  // - STRIP bucket: selecting a strip clears other strips (but keeps band)
-  // - BAND bucket: selecting a band clears other bands (but keeps strip)
-  // - clicking already selected option => deselect it
+  // Exclusive toggle within bucket
+  // - INSTALLATION: single choice
+  // - BAND: single choice
   // -------------------------
   const toggleExclusiveInBucket = (bucket: Bucket, clickedKey: string) => {
     if (disabled[clickedKey]) return;
@@ -165,7 +279,7 @@ const LedsSection = ({
       const map = toQtyMap(prev.spa?.leds as any);
       const isAlreadySelected = (map[clickedKey] ?? 0) > 0;
 
-      const keysToClear = bucket === 'BAND' ? bandKeys : stripKeys;
+      const keysToClear = bucket === 'BAND' ? bandKeys : installationKeys;
       for (const k of keysToClear) delete map[k];
 
       if (!isAlreadySelected) map[clickedKey] = 1;
@@ -180,15 +294,15 @@ const LedsSection = ({
     });
   };
 
+  const selectedInstallationKey = useMemo(() => {
+    for (const o of installationOptions) if ((qtyMap[o.key] ?? 0) > 0) return o.key;
+    return null;
+  }, [installationOptions, qtyMap]);
+
   const selectedBandKey = useMemo(() => {
     for (const o of bandOptions) if ((qtyMap[o.key] ?? 0) > 0) return o.key;
     return null;
   }, [bandOptions, qtyMap]);
-
-  const selectedStripKey = useMemo(() => {
-    for (const o of stripOptions) if ((qtyMap[o.key] ?? 0) > 0) return o.key;
-    return null;
-  }, [stripOptions, qtyMap]);
 
   return (
     <SectionWrapper title={title} description={description}>
@@ -196,24 +310,24 @@ const LedsSection = ({
         <div className="text-sm text-gray-500">Geen LED-opties beschikbaar.</div>
       )}
 
-      {/* STRIP (SINGLE, within bucket) */}
-      {stripOptions.length > 0 && (
+      {/* INSTALLATION (SINGLE) */}
+      {installationOptions.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-brand-blue">LED sets</h3>
+          <h3 className="text-lg font-semibold text-brand-blue">LED installatie</h3>
           <OptionGrid
-            options={stripOptions}
-            selectedKeys={selectedStripKey ? [selectedStripKey] : []}
+            options={installationOptions}
+            selectedKeys={selectedInstallationKey ? [selectedInstallationKey] : []}
             selectionType="SINGLE"
-            onToggle={(key) => toggleExclusiveInBucket('STRIP', key)}
+            onToggle={(key) => toggleExclusiveInBucket('INSTALLATION', key)}
             disabledOptions={disabled}
             hiddenOptions={hidden}
             isCompany={isCompany}
-            emptyLabel="Geen LED-sets beschikbaar."
+            emptyLabel="Geen LED-installatie opties beschikbaar."
           />
         </div>
       )}
 
-      {/* BAND (SINGLE, within bucket) */}
+      {/* BAND (SINGLE) */}
       {bandOptions.length > 0 && (
         <div className="space-y-3 mt-6">
           <h3 className="text-lg font-semibold text-brand-blue">LED-band</h3>
@@ -225,7 +339,7 @@ const LedsSection = ({
             disabledOptions={disabled}
             hiddenOptions={hidden}
             isCompany={isCompany}
-            emptyLabel="Geen LED-banden beschikbaar."
+            emptyLabel="Geen LED-banden beschikbaar voor dit model."
           />
         </div>
       )}

@@ -1,4 +1,4 @@
-import { CheckoutFormData } from '@/types/checkout';
+import { ApiProductType, CheckoutFormData } from '@/types/checkout';
 import { createCart } from '@/api/cartApi';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
@@ -12,7 +12,7 @@ const handleJsonResponse = async (response: Response) => {
 };
 
 export const createSale = async (
-  payload: CheckoutFormData & { cartId: string; productType?: 'hottub' | 'sauna' }
+  payload: CheckoutFormData & { cartId: string; productType?: ApiProductType }
 ) => {
   const response = await fetch(`${API_BASE_URL}/sales`, {
     method: 'POST',

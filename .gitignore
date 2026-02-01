@@ -35,3 +35,21 @@ Thumbs.db
 
 # NestJS / TS runtime leftovers
 **/*.log
+
+frontend/.env
+frontend/.env.local
+backend/.env
+backend/.env.local
+dutchies-infra/env/*.env
+
+
+# infra secrets
+dutchies-infra/.env
+dutchies-infra/env/*.env
+!dutchies-infra/env/*.env.example
+
+# app secrets
+backend/.env
+backend/.env.local
+frontend/.env
+frontend/.env.local

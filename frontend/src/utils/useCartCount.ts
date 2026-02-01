@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { CART_UPDATED_EVENT, loadCart } from '@/utils/localStorage';
+import type { CartItem } from '@/types/checkout';
 
 const getCartCount = () => {
   const cart = loadCart();
-  return cart.items.reduce((total, item) => total + (item.quantity || 0), 0);
+  const items = (cart.items ?? []) as CartItem[];
+  return items.reduce((total, item) => total + (item.quantity || 0), 0);
 };
 
 export const useCartCount = () => {

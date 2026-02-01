@@ -39,8 +39,8 @@ async function bootstrap() {
     }),
   );
 
-  const port = process.env.PORT ? Number(process.env.PORT) : 8081;
-  await app.listen(port);
+  const port = Number(process.env.PORT ?? 4000);
+  await app.listen(port, '0.0.0.0');
 }
 
 bootstrap();

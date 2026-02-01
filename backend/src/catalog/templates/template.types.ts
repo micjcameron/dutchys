@@ -1,5 +1,5 @@
-import { OptionGroupKey } from '../catalog-option-seed.types';
-import { ProductType } from '../entities/base-product.entity';
+import { OptionGroupKey, ProductType } from '../catalog.types';
+import {  } from '../entities/base-product.entity';
 
 export type SectionKey =
   | 'BASE'
