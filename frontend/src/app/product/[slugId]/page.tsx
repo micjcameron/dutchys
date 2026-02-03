@@ -5,7 +5,6 @@ import { slugify } from '@/lib/utils';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8081';
 
 function parseId(slugId: string) {
-  console.log(slugId)
   const parts = slugId.split('--');
   return parts[parts.length - 1];
 }
@@ -15,11 +14,10 @@ export default async function Page({
 }: {
   params: Promise<{ slugId: string }>;
 }) {
-  console.log(await params)
   const { slugId } = await params;
   const id = parseId(slugId);
 
-  const res = await fetch(`${API_BASE_URL}/api/public/catalog/products/${id}`, { cache: 'no-store' });
+  const res = await fetch(`${API_BASE_URL}/public/catalog/products/${id}`, { cache: 'no-store' });
   if (res.status === 404) notFound();
   if (!res.ok) throw new Error('Failed to load product');
 

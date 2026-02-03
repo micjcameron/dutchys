@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ProductType } from '../../catalog/catalog.types';
 
 export class CreateSaleDto {
@@ -8,6 +8,9 @@ export class CreateSaleDto {
   @IsOptional()
   @IsEnum(ProductType)
   productType?: ProductType;
+
+  @IsBoolean()
+  delivery!: boolean;
 
   @IsString()
   @IsNotEmpty()
@@ -20,9 +23,9 @@ export class CreateSaleDto {
   @IsEmail()
   email!: string;
 
-  @IsOptional()
   @IsString()
-  phone?: string;
+  @IsNotEmpty()
+  phone!: string;
 
   @IsString()
   @IsNotEmpty()

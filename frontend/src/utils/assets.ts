@@ -1,13 +1,11 @@
-export type AssetKind = "options" | "products";
+type AssetType = "product" | "option";
+type AssetSize = "sm" | "md" | "lg";
 
-type ImageVariant = "main" | number; // main.jpg or 1.jpg/2.jpg/3.jpg etc.
-
-export function assetImagePath(
-  kind: AssetKind,
+export function assetImage(
+  type: AssetType,
   key: string,
-  variant: ImageVariant = "main",
-  ext: "jpg" | "webp" | "png" = "jpg"
+  file = "main",
+  size: AssetSize = "md"
 ) {
-  const file = variant === "main" ? `main.${ext}` : `${variant}.${ext}`;
-  return `/assets/${kind}/${key}/${file}`;
+  return `/assets/_processed/${type}s/${key}/${size}/${file}.webp`;
 }

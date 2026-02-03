@@ -12,6 +12,9 @@ export class Sale {
   @Column({ name: 'product_type', type: 'enum', enum: ProductType, nullable: true })
   productType!: ProductType | null;
 
+  @Column({ type: 'boolean', default: true })
+  delivery!: boolean;
+
   @Column({ name: 'first_name', type: 'varchar' })
   firstName!: string;
 
@@ -21,8 +24,8 @@ export class Sale {
   @Column({ type: 'varchar' })
   email!: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  phone!: string | null;
+  @Column({ type: 'varchar' })
+  phone!: string;
 
   @Column({ type: 'varchar' })
   street!: string;

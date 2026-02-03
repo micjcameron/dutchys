@@ -1,10 +1,13 @@
 export enum OptionGroupKey {
   HEATER_INSTALLATION = 'HEATER_INSTALLATION',
+
   COOLER_BASE = 'COOLER_BASE',
   COOLER_ADD_ON = 'COOLER_ADD_ON',
+
   HEATING_BASE = 'HEATING_BASE',
   HEATER_ADDONS_INTERNAL = 'HEATER_ADDONS_INTERNAL',
   HEATER_ADDONS_EXTERNAL = 'HEATER_ADDONS_EXTERNAL',
+
   EXTRAS_BASE = 'EXTRAS_BASE',
   MATERIALS_INTERNAL_BASE = 'MATERIALS_INTERNAL_BASE',
   MATERIALS_EXTERNAL_BASE = 'MATERIALS_EXTERNAL_BASE',
@@ -25,13 +28,29 @@ export enum OptionGroupKey {
 export enum HeatingType {
   WOOD = 'WOOD',
   ELECTRIC = 'ELECTRIC',
+}
+
+/**
+ * This is what the customer chooses in the "Heater Installation" step.
+ * It decides whether they pick:
+ * - INTERNAL: one internal heater (wood OR electric)
+ * - EXTERNAL: one external wood stove
+ * - HYBRID: external wood + internal electric (two pickers in Heating step)
+ */
+export enum HeatingMode {
+  INTERNAL = 'INTERNAL',
+  EXTERNAL = 'EXTERNAL',
   HYBRID = 'HYBRID',
 }
 
-export enum HeaterInstallationType {
-  INTEGRATED = 'INTEGRATED',
+/**
+ * This is NOT the mode. It's where a specific heater SKU sits / is compatible.
+ * (Electric heaters can be BOTH, if you want to allow them for INTERNAL and HYBRID.)
+ */
+export enum HeaterLocation {
+  INTERNAL = 'INTERNAL',
   EXTERNAL = 'EXTERNAL',
-  BOTH = "BOTH"
+  BOTH = 'BOTH',
 }
 
 export enum LEDInstallationType {
@@ -61,7 +80,7 @@ export enum FiltrationType {
   CONNECTION = 'CONNECTION',
   FILTER = 'FILTER',
   UV = 'UV',
-  NONE = 'NONE'
+  NONE = 'NONE',
 }
 
 export enum CoverType {
@@ -117,7 +136,7 @@ type CatalogOptionBase = {
   groupKey: OptionGroupKey;
   name: string;
   description: string;
-  included?: boolean
+  included?: boolean;
   priceExcl: number;
   priceIncl?: number;
   vatRatePercent: number;
@@ -138,9 +157,13 @@ export type QuantityRule = {
   step?: number;
 };
 
+// -------------------------
+// HEATING types
+// -------------------------
+
 export type HeatingAttributes = {
-  type: HeatingType;
-  installationType: HeaterInstallationType
+  type: HeatingType;                 // WOOD | ELECTRIC
+  location: HeaterLocation;          // INTERNAL | EXTERNAL | BOTH
   heatingTime: string | null;
   power: string | null;
   voltage: string | null;
@@ -148,61 +171,59 @@ export type HeatingAttributes = {
   cons: string[];
   doorType?: 'METAL' | 'GLASS';
   kW?: number | null;
-};
 
-export type HeatinAddonAttributes = {
-  installationType: HeaterInstallationType
+  /**
+   * Optional: if a specific heater only applies to certain product types/models.
+   * (You can also use appliesTo at option level. This is just here if you prefer attributes.)
+   */
 };
 
 export type HeaterInstallationAttributes = {
-  type: HeaterInstallationType;
+  mode: HeatingMode;                 // INTERNAL | EXTERNAL | HYBRID
 };
 
+export type HeatingAddonAttributes = {
+  /**
+   * Which heating modes allow this add-on to be selected.
+   * Example: black plate is valid for INTERNAL and HYBRID.
+   * Example: chimney is valid for EXTERNAL and HYBRID.
+   */
+  modes: HeatingMode[];
+  heatingType: HeatingType;
+};
+
+// -------------------------
+// other attributes (unchanged)
+// -------------------------
 export type CoolerAttributes = {
   power?: string | null;
   coolingCapacity?: string | null;
 };
 
-export type MaterialFamily =
-  | 'FIBERGLASS'
-  | 'ACRYLIC'
-  | 'WOOD'
-  | 'WPC'
-  | 'WPC_HKC';
+export type MaterialFamily = 'FIBERGLASS' | 'ACRYLIC' | 'WOOD' | 'WPC' | 'WPC_HKC';
 
-export type MaterialFinish =
-  | 'STANDARD'
-  | 'PEARL'
-  | 'GRANITE'
-  | 'MARBLE';
+export type MaterialFinish = 'STANDARD' | 'PEARL' | 'GRANITE' | 'MARBLE';
 
-export type WoodMaterial =
-| 'SPRUCE'
-| 'THERMO'
+export type WoodMaterial = 'SPRUCE' | 'THERMO';
 
-export type FilterBoxMaterial =
-| 'SPRUCE'
-| 'THERMO'
-| "WPC"
+export type FilterBoxMaterial = 'SPRUCE' | 'THERMO' | 'WPC';
 
 export type MaterialProfile = 'STANDARD' | 'W_PROFILE';
 
-export type PremiumLevel = 
-'STANDARD' 
-| 'NONE'
-| 'PREMIUM';
+export type PremiumLevel = 'STANDARD' | 'NONE' | 'PREMIUM';
 
 export type MaterialAttributes = {
   material: MaterialFamily;
   variant?: string;
-  finish?: MaterialFinish | null;   // internal (FIBERGLASS, ACRYLIC)
-  profile?: MaterialProfile | null;  // external wood
-  notes?: string[];                 // optional, for UI text
-  woodType?: WoodMaterial | null;   // external wood only (required when material is WOOD)
-  constraints?: string[] | null
+  finish?: MaterialFinish | null;
+  profile?: MaterialProfile | null;
+  notes?: string[];
+  woodType?: WoodMaterial | null;
+  constraints?: string[] | null;
 };
+
 export type InsulationAttributes = {
-  level: PremiumLevel
+  level: PremiumLevel;
   pros: string[];
   cons: string[];
 };
@@ -211,19 +232,19 @@ export type SpaSystemAttributes = {
   type: SpaSystemType;
   powerKw: number | null;
   nozzles: number | null;
-  minimumRequire?: boolean
+  minimumRequire?: boolean;
 };
 
 export type LedAttributes = {
   type: LedType;
-  installationType: LEDInstallationType
+  installationType: LEDInstallationType;
 };
 
 export type FiltrationAttributes = {
-  requiresFilter?: boolean
-  constraints?: string[]
-  warnings?: string[]
-  material?: FilterBoxMaterial
+  requiresFilter?: boolean;
+  constraints?: string[];
+  warnings?: string[];
+  material?: FilterBoxMaterial;
 };
 
 export type CoverAttributes = {
@@ -234,9 +255,9 @@ export type CoverAttributes = {
 
 export type ControlUnitAttributes = {
   type: ControlUnitType;
-  capabilities?: string[]
-  pros?: string[]
-  cons?: string[]
+  capabilities?: string[];
+  pros?: string[];
+  cons?: string[];
   included?: boolean;
 };
 
@@ -245,8 +266,8 @@ export type LidAttributes = {
   included?: boolean;
   material?: LidMaterial | null;
   color?: LidColor | null;
-  pros?: string[]
-  cons?: string[]
+  pros?: string[];
+  cons?: string[];
 };
 
 export type StairsAttributes = {
@@ -270,6 +291,9 @@ export type FilterBoxAttributes = {
   inheritsExternalColor: boolean;
 };
 
+// -------------------------
+// Union
+// -------------------------
 export type CatalogOptionSeed =
   | (CatalogOptionBase & {
       groupKey: OptionGroupKey.COOLER_BASE;
@@ -286,6 +310,14 @@ export type CatalogOptionSeed =
   | (CatalogOptionBase & {
       groupKey: OptionGroupKey.HEATING_BASE;
       attributes: HeatingAttributes;
+    })
+  | (CatalogOptionBase & {
+      groupKey: OptionGroupKey.HEATER_ADDONS_INTERNAL;
+      attributes: HeatingAddonAttributes;
+    })
+  | (CatalogOptionBase & {
+      groupKey: OptionGroupKey.HEATER_ADDONS_EXTERNAL;
+      attributes: HeatingAddonAttributes;
     })
   | (CatalogOptionBase & {
       groupKey: OptionGroupKey.MATERIALS_INTERNAL_BASE;
@@ -311,14 +343,18 @@ export type CatalogOptionSeed =
       groupKey: OptionGroupKey.FILTRATION_FILTER_BASE;
       attributes: FiltrationAttributes | null;
     })
-    | (CatalogOptionBase & {
+  | (CatalogOptionBase & {
       groupKey: OptionGroupKey.FILTRATION_CONNECTOR_BASE;
       attributes: FiltrationAttributes | null;
     })
   | (CatalogOptionBase & {
-    groupKey: OptionGroupKey.FILTRATION_ADDONS;
-    attributes: FiltrationAttributes | null;
-  })
+      groupKey: OptionGroupKey.FILTRATION_ADDONS;
+      attributes: FiltrationAttributes | null;
+    })
+  | (CatalogOptionBase & {
+      groupKey: OptionGroupKey.FILTRATION_BOX;
+      attributes: FiltrationAttributes | null;
+    })
   | (CatalogOptionBase & {
       groupKey: OptionGroupKey.COVER_BASE;
       attributes: CoverAttributes;
@@ -335,22 +371,10 @@ export type CatalogOptionSeed =
       groupKey: OptionGroupKey.STAIRS_BASE;
       attributes: StairsAttributes;
     })
-    | (CatalogOptionBase & {
+  | (CatalogOptionBase & {
       groupKey: OptionGroupKey.STAIRS_COVER_FILTER;
       attributes: StairsExtra | null;
     })
   | (CatalogOptionBase & {
-      groupKey: OptionGroupKey.HEATER_ADDONS_INTERNAL;
-      attributes: HeatinAddonAttributes;
-    })
-  | (CatalogOptionBase & {
-      groupKey: OptionGroupKey.HEATER_ADDONS_EXTERNAL;
-      attributes: HeatinAddonAttributes;
-    })
-  | (CatalogOptionBase & {
       groupKey: OptionGroupKey.EXTRAS_BASE;
-    })
-  | (CatalogOptionBase & {
-      groupKey: OptionGroupKey.FILTRATION_BOX;
-      attributes: FiltrationAttributes | null;
     });

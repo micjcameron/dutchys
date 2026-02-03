@@ -17,8 +17,6 @@ import { BaseShape, HeatingType, ProductType } from '../src/catalog/catalog.type
 import { toPriceExcl, toPriceIncl } from '../src/utils/price-util';
 import { optionGroupsSeed } from '../src/data/option-groups';
 
-// ✅ use your pricing util (adjust import path if needed)
-
 config();
 
 const VAT_RATE_DEFAULT_PERCENT = 21;
@@ -57,7 +55,7 @@ const toBaseShape = (raw?: unknown): BaseShape | null => {
   if (s === 'PLUNGE') return BaseShape.PLUNGE;
 
   // legacy / inconsistent inputs
-  if (s === 'RECTANGLE') return BaseShape.SQUARE; // you said sauna is rectangle; treat as SQUARE for now
+  if (s === 'RECTANGLE') return BaseShape.SQUARE; // treat as SQUARE for now
   if (s === '') return null;
 
   return null;
@@ -86,23 +84,26 @@ productsData.forEach((product) => {
         ? ProductType.SAUNA
         : ProductType.HOTTUB;
 
-  // keep this for now (you said it matters for sauna; cold plunge none)
-  const heatingTypes =
-    productType === ProductType.COLD_PLUNGE
-      ? null
-      : [HeatingType.WOOD, HeatingType.ELECTRIC, HeatingType.HYBRID];
+  /**
+   * Heater kinds supported by this product.
+   * - Hybrid is NOT a HeatingType anymore (it's a HeatingMode on the FE side).
+   * - Default: hottub + sauna support wood + electric; cold plunge has none.
+   *
+   * If you want to get fancy later, you can read this from products.json,
+   * but for now keep it simple and deterministic.
+   */
+  const heatingTypes: HeatingType[] | null =
+    productType === ProductType.COLD_PLUNGE ? null : [HeatingType.WOOD, HeatingType.ELECTRIC];
 
   // PRICE POLICY: priceIncl is truth
   const vatRatePercent = normalizeVat(product.vatRatePercent ?? VAT_RATE_DEFAULT_PERCENT);
   const priceIncl = normalizeNumber(product.priceIncl);
-  const computedIncl =
-    priceIncl > 0 ? priceIncl : toPriceIncl(normalizeNumber(product.priceExcl), vatRatePercent);
+  const computedIncl = priceIncl > 0 ? priceIncl : toPriceIncl(normalizeNumber(product.priceExcl), vatRatePercent);
   const priceExcl = toPriceExcl(computedIncl, vatRatePercent);
 
   // key is canonical; id is DB-only and should not be seeded from JSON
   const key = String(product.key ?? '').trim();
   if (!key) {
-    // If you ever have missing keys in products.json this prevents silent bad data.
     // eslint-disable-next-line no-console
     console.warn('Skipping product without key:', product);
     return;
@@ -112,7 +113,7 @@ productsData.forEach((product) => {
   const slug = slugify(String(slugSource));
 
   baseProductsSeed.push({
-    key, // ✅ NEW canonical key
+    key,
     slug,
     type: productType,
     shape: toBaseShape(product.shape),
@@ -148,54 +149,42 @@ export const seedProducts = async (dataSource: DataSource) => {
   const optionRepo = dataSource.getRepository(OptionEntity);
 
   logger.log('Seeding option groups...');
-  await optionGroupRepo.upsert(
-    optionGroupsSeed as QueryDeepPartialEntity<OptionGroupEntity>[],
-    ['key'],
-  );
+  await optionGroupRepo.upsert(optionGroupsSeed as QueryDeepPartialEntity<OptionGroupEntity>[], ['key']);
 
   logger.log('Seeding base products...');
-  // ✅ Upsert by canonical key (NOT slug)
-  await baseProductRepo.upsert(
-    baseProductsSeed as QueryDeepPartialEntity<BaseProductEntity>[],
-    ['key'],
-  );
+  await baseProductRepo.upsert(baseProductsSeed as QueryDeepPartialEntity<BaseProductEntity>[], ['key']);
 
   logger.log('Seeding options...');
-  const groupIdByKey = new Map(
-    (await optionGroupRepo.find()).map((group) => [group.key, group.id]),
-  );
+  const groupIdByKey = new Map((await optionGroupRepo.find()).map((group) => [group.key, group.id]));
 
   const optionsSeed = catalogOptions.map((option) => {
     const { groupKey, attributes, appliesTo, ...rest } = option as any;
-  
+
     const vatRatePercent = normalizeVat(rest.vatRatePercent ?? VAT_RATE_DEFAULT_PERCENT);
-  
+
     // PRICE POLICY: priceIncl truth
     const priceInclCandidate =
       typeof rest.priceIncl === 'number'
         ? rest.priceIncl
         : toPriceIncl(normalizeNumber(rest.priceExcl ?? 0), vatRatePercent);
-  
+
     const priceIncl = normalizeNumber(priceInclCandidate);
     const priceExcl = toPriceExcl(priceIncl, vatRatePercent);
-  
+
     return {
       ...rest,
       vatRatePercent,
       priceIncl,
       priceExcl,
       groupId: groupKey ? groupIdByKey.get(groupKey) ?? null : null,
-  
-      // 🔥 IMPORTANT: never allow null into NOT NULL jsonb columns
+
+      // never allow null into NOT NULL jsonb columns
       attributes: attributes ?? {},
       appliesTo: appliesTo ?? {},
     };
-  });  
+  });
 
-  await optionRepo.upsert(
-    optionsSeed as QueryDeepPartialEntity<OptionEntity>[],
-    ['key'],
-  );
+  await optionRepo.upsert(optionsSeed as QueryDeepPartialEntity<OptionEntity>[], ['key']);
 };
 
 const runSeeder = async () => {

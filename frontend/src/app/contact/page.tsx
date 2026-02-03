@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { submitContactForm } from '@/api/communicationApi';
 
 export default function ContactPage() {
   const searchParams = useSearchParams();
@@ -14,6 +15,8 @@ export default function ContactPage() {
     phone: '',
     message: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
 
   useEffect(() => {
     const prefillMessage = searchParams.get('message');
@@ -30,8 +33,28 @@ export default function ContactPage() {
     setFormState((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (isSubmitting) {
+      return;
+    }
+    setIsSubmitting(true);
+    setStatusMessage('');
+    try {
+      await submitContactForm({
+        name: formState.name.trim(),
+        email: formState.email.trim(),
+        phone: formState.phone.trim() || undefined,
+        message: formState.message.trim(),
+      });
+      setStatusMessage('Bedankt! Je bericht is verzonden. We nemen snel contact met je op.');
+      setFormState({ name: '', email: '', phone: '', message: '' });
+    } catch (error) {
+      console.error('Failed to submit contact form:', error);
+      setStatusMessage('Er ging iets mis. Probeer het later opnieuw.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -128,12 +151,23 @@ export default function ContactPage() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full bg-brand-orange text-white hover:bg-brand-orange/90">
-                  Verstuur bericht
+                <Button
+                  type="submit"
+                  className="w-full bg-brand-orange text-white hover:bg-brand-orange/90"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Versturen...' : 'Verstuur bericht'}
                 </Button>
+                {statusMessage && (
+                  <p
+                    className={`text-sm ${statusMessage.startsWith('Bedankt') ? 'text-green-600' : 'text-red-600'}`}
+                    role="status"
+                  >
+                    {statusMessage}
+                  </p>
+                )}
                 <p className="text-xs text-gray-500">
-                  Door te verzenden ga je akkoord dat we je bericht verwerken. Dit formulier
-                  is nu nog een demo en stuurt nog geen e-mail.
+                  Door te verzenden ga je akkoord dat we je bericht verwerken.
                 </p>
               </form>
             </div>

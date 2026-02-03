@@ -64,6 +64,8 @@ const collectSelectedOptionKeys = (selections: ConfigSelections) => {
   const keys = new Set<string>();
 
   if (selections.heating?.optionId) keys.add(selections.heating.optionId);
+  if (selections.heating?.internalOptionId) keys.add(selections.heating.internalOptionId);
+  if (selections.heating?.externalOptionId) keys.add(selections.heating.externalOptionId);
   if (selections.heaterInstallation?.optionId) keys.add(selections.heaterInstallation.optionId);
   if (selections.cooler?.optionId) keys.add(selections.cooler.optionId);
 

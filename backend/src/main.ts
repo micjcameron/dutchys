@@ -24,7 +24,7 @@ async function bootstrap() {
       return callback(new Error('Not allowed by CORS'), false);
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Signature', 'X-Timestamp'],
   });
 
   app.use(compression());

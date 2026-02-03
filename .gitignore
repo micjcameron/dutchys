@@ -53,3 +53,7 @@ backend/.env
 backend/.env.local
 frontend/.env
 frontend/.env.local
+
+# asset folders
+frontend/public/assets/
+backend/public/assets/

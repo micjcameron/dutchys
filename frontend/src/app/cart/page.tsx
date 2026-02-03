@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/button';
 import { clearCartId, loadCart, updateCartItemQuantity, removeCartItem } from '@/utils/localStorage';
 import { deleteCart, updateCart } from '@/api/cartApi';
 import { fetchCatalog } from '@/api/catalogApi';
-import { toPriceExcl } from '@/utils/price-util';
+import { toPriceExcl, toPriceIncl } from '@/utils/price-util';
 
 type CartItem = {
   id?: string;
-  type?: 'product' | 'configurator';
+  type?: 'product' | 'configurator' | 'extra';
   productType?: 'hottub' | 'sauna' | 'coldPlunge';
   productId?: string;
   quantity: number;
@@ -41,7 +41,7 @@ type Product = {
 
 type CartEntry = {
   cartKey: string;
-  type: 'product' | 'configurator';
+  type: 'product' | 'configurator' | 'extra';
   productType?: 'hottub' | 'sauna' | 'coldPlunge';
   title: string;
   description?: string;
@@ -55,23 +55,22 @@ type CartEntry = {
   options?: string[];
 };
 
+const VAT_RATE_DEFAULT_PERCENT = 21;
+
 export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [cartId, setCartId] = useState<string | null>(null);
+
   const getConfiguratorLabel = (productType?: CartItem['productType']) =>
     productType === 'sauna' ? 'sauna' : 'hottub';
+
   const normalizeProductType = (value?: string): CartItem['productType'] => {
     const normalized = (value ?? '').toLowerCase();
-    if (normalized === 'sauna') {
-      return 'sauna';
-    }
-    if (normalized === 'cold_plunge' || normalized === 'coldplunge') {
-      return 'coldPlunge';
-    }
+    if (normalized === 'sauna') return 'sauna';
+    if (normalized === 'cold_plunge' || normalized === 'coldplunge') return 'coldPlunge';
     return 'hottub';
   };
-
-  const [cartId, setCartId] = useState<string | null>(null);
 
   useEffect(() => {
     const cart = loadCart();
@@ -81,6 +80,7 @@ export default function CartPage() {
 
   useEffect(() => {
     let isMounted = true;
+
     const loadProducts = async () => {
       try {
         const catalog = await fetchCatalog();
@@ -95,9 +95,8 @@ export default function CartPage() {
           attributes: product.attributes ?? {},
           heatingTypes: product.heatingTypes ?? null,
         })) as Product[];
-        if (isMounted) {
-          setProducts(list);
-        }
+
+        if (isMounted) setProducts(list);
       } catch (error) {
         console.error('Failed to load catalog products:', error);
       }
@@ -110,24 +109,73 @@ export default function CartPage() {
     };
   }, []);
 
-  const formatCurrency = (value: number) =>
-    value.toLocaleString('nl-NL', { minimumFractionDigits: 2 });
-  const toExcl = (value: number, vatRatePercent = 21) =>
-    Math.round(toPriceExcl(value, vatRatePercent) * 100) / 100;
+  const formatCurrency = (value: number) => value.toLocaleString('nl-NL', { minimumFractionDigits: 2 });
+
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+
+  const toExcl = (incl: number, vatRatePercent = VAT_RATE_DEFAULT_PERCENT) =>
+    round2(toPriceExcl(incl, vatRatePercent));
+
+  const toIncl = (excl: number, vatRatePercent = VAT_RATE_DEFAULT_PERCENT) =>
+    round2(toPriceIncl(excl, vatRatePercent));
+
+  // ✅ robust: treat 0 as "missing" for configurator items,
+  // because you store either incl OR excl depending on customer type.
+  const normalizeConfiguratorPrices = (
+    rawIncl?: number,
+    rawExcl?: number,
+    vatRatePercent = VAT_RATE_DEFAULT_PERCENT,
+  ) => {
+    const incl = typeof rawIncl === 'number' && Number.isFinite(rawIncl) ? rawIncl : 0;
+    const excl = typeof rawExcl === 'number' && Number.isFinite(rawExcl) ? rawExcl : 0;
+
+    if (incl > 0 && excl > 0) return { priceIncl: incl, priceExcl: excl };
+    if (incl > 0 && excl <= 0) return { priceIncl: incl, priceExcl: toExcl(incl, vatRatePercent) };
+    if (excl > 0 && incl <= 0) return { priceIncl: toIncl(excl, vatRatePercent), priceExcl: excl };
+
+    return { priceIncl: 0, priceExcl: 0 };
+  };
 
   const entries = useMemo(() => {
     return items
       .map((item, index) => {
-        if (item.type === 'configurator') {
-          const priceIncl = item.priceIncl || 0;
+        if (item.type === 'extra') {
+          const quantity = item.quantity || 1;
+          const priceIncl = item.priceIncl ?? 0;
           const priceExcl = item.priceExcl ?? toExcl(priceIncl);
+
+          return {
+            cartKey: item.id || `extra-${index}`,
+            type: 'extra' as const,
+            title: item.title || 'Extra',
+            description: item.description,
+            image: item.image,
+            quantity,
+            priceIncl,
+            priceExcl,
+            lineTotalIncl: priceIncl * quantity,
+            lineTotalExcl: priceExcl * quantity,
+            badges: ['Extra'],
+            options: item.options || [],
+          };
+        }
+
+        if (item.type === 'configurator') {
           const quantity = item.quantity || 1;
           const configuratorLabel = getConfiguratorLabel(item.productType);
+
+          const { priceIncl, priceExcl } = normalizeConfiguratorPrices(item.priceIncl, item.priceExcl);
+
+          const baseTitle = item.title ?? configuratorLabel;
+          const title = baseTitle.toLowerCase().includes('maatwerk')
+            ? baseTitle
+            : `Maatwerk ${baseTitle}`;
+
           return {
             cartKey: item.id || `config-${index}`,
-            type: 'configurator',
+            type: 'configurator' as const,
             productType: item.productType ?? 'hottub',
-            title: item.title || `Maatwerk ${configuratorLabel} configuratie`,
+            title: title,
             description: item.description,
             image: item.image,
             quantity,
@@ -145,14 +193,17 @@ export default function CartPage() {
 
         const productId = item.productId || item.id;
         const product = products.find((entry) => entry.id === productId);
-        if (!product) {
-          return null;
-        }
+        if (!product) return null;
+
         const quantity = item.quantity || 1;
-        const persons = product.attributes?.personsMin && product.attributes?.personsMax
-          ? `${product.attributes.personsMin}-${product.attributes.personsMax}`
-          : null;
+
+        const persons =
+          product.attributes?.personsMin && product.attributes?.personsMax
+            ? `${product.attributes.personsMin}-${product.attributes.personsMax}`
+            : null;
+
         const size = product.attributes?.size ?? null;
+
         const heatingLabels = (product.heatingTypes ?? []).map((type) =>
           type === 'WOOD'
             ? 'houtgestookt'
@@ -162,9 +213,10 @@ export default function CartPage() {
                 ? 'hybride'
                 : type,
         );
+
         return {
           cartKey: product.id,
-          type: 'product',
+          type: 'product' as const,
           productType: normalizeProductType(product.productType),
           title: product.name,
           description: product.description,
@@ -185,9 +237,8 @@ export default function CartPage() {
   }, [items, products]);
 
   const syncCart = async (nextItems: CartItem[]) => {
-    if (!cartId) {
-      return;
-    }
+    if (!cartId) return;
+
     try {
       if (nextItems.length === 0) {
         await deleteCart(cartId);
@@ -213,21 +264,14 @@ export default function CartPage() {
     void syncCart(updatedItems);
   };
 
-  const subtotalIncl = useMemo(
-    () => entries.reduce((total, entry) => total + entry.lineTotalIncl, 0),
-    [entries]
-  );
-  const subtotalExcl = useMemo(
-    () => entries.reduce((total, entry) => total + entry.lineTotalExcl, 0),
-    [entries]
-  );
+  const subtotalIncl = useMemo(() => entries.reduce((total, entry) => total + entry.lineTotalIncl, 0), [entries]);
+  const subtotalExcl = useMemo(() => entries.reduce((total, entry) => total + entry.lineTotalExcl, 0), [entries]);
   const vatTotal = useMemo(() => subtotalIncl - subtotalExcl, [subtotalExcl, subtotalIncl]);
-  const showShellWarning = entries.length > 0 && entries.every((entry) => entry.type === 'product');
-  const contactMessage = useMemo(() => {
-    if (entries.length === 0) {
-      return null;
-    }
 
+  const showShellWarning = entries.length > 0 && entries.every((entry) => entry.type === 'product');
+
+  const contactMessage = useMemo(() => {
+    if (entries.length === 0) return null;
     const hasConfigurator = entries.some((entry) => entry.type === 'configurator');
 
     return hasConfigurator
@@ -261,25 +305,31 @@ export default function CartPage() {
                     <div className="flex flex-col md:flex-row gap-6">
                       {entry.image && (
                         <div className="w-full md:w-40 h-32 bg-gray-100 rounded-xl overflow-hidden">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={entry.image} alt={entry.title} className="w-full h-full object-cover" />
                         </div>
-                      )}
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                          <div>
-                            <h2 className="text-xl font-semibold text-gray-900">{entry.title}</h2>
-                            {entry.description && (
-                              <p className="text-gray-600 text-sm mt-1">{entry.description}</p>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-semibold text-gray-900">
-                              €{formatCurrency(entry.lineTotalIncl)}
-                            </p>
-                            <p className="text-xs text-gray-500">€{formatCurrency(entry.lineTotalExcl)} excl. btw</p>
-                          </div>
+                       )}
+
+                      <div className="flex-1 min-w-0">
+                        {/* Title + description */}
+                        <div className="space-y-1">
+                          <h2 className="text-xl font-semibold text-gray-900">{entry.title}</h2>
+                          {entry.description && (
+                            <p className="text-gray-600 text-sm">{entry.description}</p>
+                          )}
                         </div>
 
+                        {/* Price block — now aligned with items list */}
+                        <div className="mt-4 space-y-1">
+                          <p className="text-lg font-semibold text-gray-900">
+                            €{formatCurrency(entry.lineTotalIncl)}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            €{formatCurrency(entry.lineTotalExcl)} excl. btw
+                          </p>
+                        </div>
+
+                        {/* Badges */}
                         {entry.badges.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-4">
                             {entry.badges.map((badge) => (
@@ -293,13 +343,14 @@ export default function CartPage() {
                           </div>
                         )}
 
+                        {/* Options list */}
                         {entry.options && entry.options.length > 0 && (
-                          <div className="mt-4 text-sm text-gray-600">
+                          <div className="mt-4 text-sm text-gray-600 space-y-1">
                             {entry.options.map((option) => (
                               <div key={option}>{option}</div>
                             ))}
                           </div>
-                        )}
+                        )}    
 
                         <div className="flex items-center gap-4 mt-6">
                           <div className="flex items-center gap-2">
@@ -320,6 +371,7 @@ export default function CartPage() {
                               +
                             </Button>
                           </div>
+
                           <Button variant="ghost" onClick={() => handleRemoveItem(entry.cartKey)}>
                             Verwijderen
                           </Button>
@@ -335,6 +387,7 @@ export default function CartPage() {
           <aside className="w-full lg:w-96">
             <div className="bg-white rounded-2xl p-6 shadow-sm sticky top-24">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Overzicht</h2>
+
               <div className="space-y-3 text-sm text-gray-600">
                 <div className="flex justify-between">
                   <span>Subtotaal (incl.)</span>
@@ -355,9 +408,7 @@ export default function CartPage() {
               </div>
 
               {contactMessage && (
-                <div className="mt-6 bg-gray-50 p-4 rounded-xl text-sm text-gray-600">
-                  {contactMessage}
-                </div>
+                <div className="mt-6 bg-gray-50 p-4 rounded-xl text-sm text-gray-600">{contactMessage}</div>
               )}
 
               <Button className="w-full mt-6" disabled={entries.length === 0}>

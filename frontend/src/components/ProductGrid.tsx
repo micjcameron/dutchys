@@ -180,7 +180,16 @@ export default function ProductGrid({
           loading="lazy"
           sizes="(max-width: 768px) 100vw, 50vw"
         />
+
+        {[1,2,3].map(i => (
+  <img
+    key={i}
+    src={assetImage("product", product.key, String(i))}
+    alt=""
+  />
+))}
    */
+
 
   return (
     <div>

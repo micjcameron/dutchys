@@ -14,14 +14,6 @@ export class CreatePaymentDto {
   description!: string;
 
   @IsOptional()
-  @IsString()
-  redirectUrl?: string;
-
-  @IsOptional()
-  @IsString()
-  webhookUrl?: string;
-
-  @IsOptional()
   @IsObject()
   metadata?: Record<string, unknown>;
 }

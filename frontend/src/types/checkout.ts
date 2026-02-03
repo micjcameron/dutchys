@@ -3,7 +3,7 @@ export type ApiProductType = 'HOTTUB' | 'SAUNA' | 'COLD_PLUNGE';
 
 export type CartItem = {
   id?: string;
-  type?: 'product' | 'configurator';
+  type?: 'product' | 'configurator' | 'extra';
   productType?: UiProductType;
   productId?: string;
   quantity: number;
@@ -20,7 +20,7 @@ export type CartItem = {
 
 export type CartSummaryEntry = {
   cartKey: string;
-  type: 'product' | 'configurator';
+  type: 'product' | 'configurator' | 'extra';
   productType?: UiProductType;
   title: string;
   quantity: number;
@@ -31,6 +31,7 @@ export type CartSummaryEntry = {
 };
 
 export type CheckoutFormData = {
+  delivery: boolean;
   firstName: string;
   lastName: string;
   email: string;

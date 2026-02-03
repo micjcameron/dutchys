@@ -9,6 +9,7 @@ type CheckoutFormProps = {
 };
 
 const emptyForm: CheckoutFormData = {
+  delivery: true,
   firstName: '',
   lastName: '',
   email: '',
@@ -26,7 +27,10 @@ const inputClassName =
 
 export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }: CheckoutFormProps) {
   const safeValue = value ?? emptyForm;
-  const updateField = (field: keyof CheckoutFormData, nextValue: string) => {
+  const updateField = <K extends keyof CheckoutFormData>(
+    field: K,
+    nextValue: CheckoutFormData[K]
+  ) => {
     onChange({
       ...safeValue,
       [field]: nextValue,
@@ -78,12 +82,13 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-gray-700">Telefoonnummer (optioneel)</label>
+          <label className="text-sm font-medium text-gray-700">Telefoonnummer</label>
           <input
             type="tel"
             className={inputClassName}
             value={safeValue.phone}
             onChange={(event) => updateField('phone', event.target.value)}
+            required
           />
         </div>
       </div>
@@ -141,6 +146,40 @@ export default function CheckoutForm({ value, isSubmitting, onChange, onSubmit }
               required
             />
           </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-semibold text-brand-blue mb-2">Bezorging</h3>
+        <div className="space-y-3">
+          <label className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 shadow-sm">
+            <input
+              type="radio"
+              name="delivery"
+              className="mt-1"
+              checked={safeValue.delivery === true}
+              onChange={() => updateField('delivery', true)}
+            />
+            <span>
+              <span className="block font-medium text-gray-900">
+                In Nederland geleverd tot aan de voordeur
+              </span>
+              <span className="block text-gray-600">€ 399,00</span>
+            </span>
+          </label>
+          <label className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 shadow-sm">
+            <input
+              type="radio"
+              name="delivery"
+              className="mt-1"
+              checked={safeValue.delivery === false}
+              onChange={() => updateField('delivery', false)}
+            />
+            <span>
+              <span className="block font-medium text-gray-900">Geleverd en geïnstalleerd</span>
+              <span className="block text-gray-600">Offerte</span>
+            </span>
+          </label>
         </div>
       </div>
 

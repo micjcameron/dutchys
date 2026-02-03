@@ -7,13 +7,11 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { BaseShape, HeatingType, ProductType } from '../catalog.types'; // adjust import path
+import { BaseShape, HeatingType, ProductType } from '../catalog.types'; // adjust path if needed
 
 const numericTransformer = {
-  to: (value?: number | null) =>
-    typeof value === 'number' ? value : value ?? null,
-  from: (value?: string | null) =>
-    value === null || value === undefined ? null : Number(value),
+  to: (value?: number | null) => (typeof value === 'number' ? value : value ?? null),
+  from: (value?: string | null) => (value === null || value === undefined ? null : Number(value)),
 };
 
 @Entity({ name: 'base_products' })
@@ -52,8 +50,9 @@ export class BaseProductEntity {
   description!: string;
 
   /**
-   * Optional: for SAUNA/cold plunge you might use this.
-   * For hottubs you can leave null and drive everything via options.
+   * Heater kinds supported by this product (NOT "mode").
+   * - "Hybrid" is no longer a HeatingType; it's a HeatingMode in the FE (internal/external/hybrid).
+   * - For hottubs/saunas you typically allow WOOD and/or ELECTRIC.
    */
   @Column({ type: 'enum', enum: HeatingType, array: true, nullable: true })
   heatingTypes!: HeatingType[] | null;
@@ -108,3 +107,4 @@ export class BaseProductEntity {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }
+

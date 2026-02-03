@@ -44,4 +44,12 @@ export class CartsService {
 
     return { deleted: true };
   }
+
+  async getCartById(id: string) {
+    const cart = await this.cartsRepository.findById(id);
+    if (!cart) {
+      throw new NotFoundException('Cart not found');
+    }
+    return cart;
+  }
 }

@@ -15,8 +15,6 @@ export class PaymentsController {
       amountValue: dto.amountValue,
       currency: dto.currency,
       description: dto.description,
-      redirectUrl: dto.redirectUrl,
-      webhookUrl: dto.webhookUrl,
       metadata: dto.metadata,
     });
     return this.paymentsService.createPayment(dto);

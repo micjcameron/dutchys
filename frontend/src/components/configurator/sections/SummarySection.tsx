@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SectionWrapper from './SectionWrapper';
@@ -11,18 +11,16 @@ interface SummarySectionProps {
   title: string;
   description?: string;
 
-  product: BaseProduct | null; // base product pricing
-  options: CatalogOption[]; // all catalog options (single list)
-  selections: ConfigSelections; // source of truth
+  product: BaseProduct | null;
+  options: CatalogOption[];
+  selections: ConfigSelections;
 
   isCompany: boolean;
   onAddToCart: () => void;
   isDisabled?: boolean;
 
-  // Summary is always valid; also used to hide “Volgende” in ProductConfigurator
   setSectionGate?: (gate: { isValid: boolean; warning?: string | null }) => void;
 
-  // ✅ new: allow jumping back to a step
   onEditSection: (section: SectionKey | 'BASE' | 'CUSTOMER') => void;
 }
 
@@ -46,7 +44,6 @@ const safeNum = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v
 
 type QtyMap = Record<string, number>;
 const toQtyMap = (value: unknown): QtyMap => {
-  // canonical: string[] (duplicates = qty)
   if (Array.isArray(value)) {
     const map: QtyMap = {};
     for (const k of value) {
@@ -56,7 +53,6 @@ const toQtyMap = (value: unknown): QtyMap => {
     return map;
   }
 
-  // tolerate legacy: { KEY: number }
   if (value && typeof value === 'object') {
     const map: QtyMap = {};
     for (const [k, v] of Object.entries(value as Record<string, any>)) {
@@ -87,6 +83,9 @@ const SummarySection = ({
     setSectionGate?.({ isValid: true, warning: null });
   }, [setSectionGate]);
 
+  // Collapsed by default (compact)
+  const [isEditing, setIsEditing] = useState(false);
+
   const optionByKey = useMemo(() => {
     const m = new Map<string, CatalogOption>();
     for (const o of options ?? []) {
@@ -112,13 +111,13 @@ const SummarySection = ({
     };
   }, [product]);
 
-  const hydrateOptionItem = (key: string, quantity: number): LineItem | null => {
+  const hydrateOptionItem = (key: string, quantity: number, labelPrefix?: string): LineItem | null => {
     const opt = optionByKey.get(key);
     if (!opt) {
       return {
         key,
         quantity,
-        name: key,
+        name: labelPrefix ? `${labelPrefix}: ${key}` : key,
         unitPriceIncl: 0,
         unitPriceExcl: 0,
         included: false,
@@ -129,7 +128,7 @@ const SummarySection = ({
     return {
       key,
       quantity,
-      name: opt.name ?? key,
+      name: labelPrefix ? `${labelPrefix}: ${opt.name ?? key}` : (opt.name ?? key),
       unitPriceIncl: safeNum(opt.priceIncl),
       unitPriceExcl: safeNum(opt.priceExcl),
       included: Boolean((opt as any)?.included),
@@ -140,7 +139,6 @@ const SummarySection = ({
   const groups = useMemo<SummaryGroup[]>(() => {
     const out: SummaryGroup[] = [];
 
-    // Helpers
     const addMany = (keys: Array<string | null | undefined>, group: SummaryGroup) => {
       for (const k of keys) {
         if (!k) continue;
@@ -157,14 +155,14 @@ const SummarySection = ({
       }
     };
 
-    // ✅ Basisproduct (BASE)
+    // BASE
     out.push({
       id: 'BASE',
       titleNl: 'Basisproduct',
       items: baseLine ? [baseLine] : [],
     });
 
-    // ✅ Installatie (HEATER_INSTALLATION)
+    // HEATER_INSTALLATION
     out.push({
       id: 'HEATER_INSTALLATION' as SectionKey,
       titleNl: 'Installatie',
@@ -173,20 +171,35 @@ const SummarySection = ({
         : [],
     });
 
-    // ✅ Verwarming (HEATING)
+    // HEATING (new setup)
     const heatingGroup: SummaryGroup = {
       id: 'HEATING' as SectionKey,
       titleNl: 'Verwarming',
       items: [],
     };
-    if (selections.heating?.optionId) {
-      const item = hydrateOptionItem(selections.heating.optionId, 1);
+
+    const singleHeatingKey = selections.heating?.optionId ?? null;
+    const internalHeatingKey = selections.heating?.internalOptionId ?? null;
+    const externalHeatingKey = selections.heating?.externalOptionId ?? null;
+
+    if (singleHeatingKey) {
+      const item = hydrateOptionItem(singleHeatingKey, 1);
       if (item) heatingGroup.items.push(item);
+    } else {
+      if (externalHeatingKey) {
+        const item = hydrateOptionItem(externalHeatingKey, 1, 'Extern');
+        if (item) heatingGroup.items.push(item);
+      }
+      if (internalHeatingKey) {
+        const item = hydrateOptionItem(internalHeatingKey, 1, 'Intern');
+        if (item) heatingGroup.items.push(item);
+      }
     }
+
     addMany(selections.heating?.extras ?? [], heatingGroup);
     out.push(heatingGroup);
 
-    // ✅ Koeler (COOLER)
+    // COOLER
     out.push({
       id: 'COOLER' as SectionKey,
       titleNl: 'Koeler',
@@ -195,7 +208,7 @@ const SummarySection = ({
         : [],
     });
 
-    // ✅ Materialen (MATERIALS)
+    // MATERIALS
     const materialsGroup: SummaryGroup = { id: 'MATERIALS' as SectionKey, titleNl: 'Materialen', items: [] };
     if (selections.materials?.internalMaterialId) {
       const item = hydrateOptionItem(selections.materials.internalMaterialId, 1);
@@ -207,7 +220,7 @@ const SummarySection = ({
     }
     out.push(materialsGroup);
 
-    // ✅ Isolatie (INSULATION)
+    // INSULATION
     out.push({
       id: 'INSULATION' as SectionKey,
       titleNl: 'Isolatie',
@@ -216,33 +229,33 @@ const SummarySection = ({
         : [],
     });
 
-    // ✅ Spa-systeem (SPA)
+    // SPA
     out.push({
       id: 'SPA' as SectionKey,
       titleNl: 'Spa-systeem',
       items: selections.spa?.systemId ? [hydrateOptionItem(selections.spa.systemId, 1)!].filter(Boolean) : [],
     });
 
-    // ✅ LEDs (LEDS)
+    // LEDS
     const ledsGroup: SummaryGroup = { id: 'LEDS' as SectionKey, titleNl: 'LED-verlichting', items: [] };
     addQtyMap(toQtyMap(selections.spa?.leds as any), ledsGroup);
     out.push(ledsGroup);
 
-    // ✅ Deksel (LID)
+    // LID
     out.push({
       id: 'LID' as SectionKey,
       titleNl: 'Deksel',
       items: selections.lid?.optionId ? [hydrateOptionItem(selections.lid.optionId, 1)!].filter(Boolean) : [],
     });
 
-    // ✅ Cover (COVER)
+    // COVER
     out.push({
       id: 'COVER' as SectionKey,
       titleNl: 'Cover',
       items: selections.cover?.optionId ? [hydrateOptionItem(selections.cover.optionId, 1)!].filter(Boolean) : [],
     });
 
-    // ✅ Filtratie (FILTRATION)
+    // FILTRATION
     const filtrationGroup: SummaryGroup = { id: 'FILTRATION' as SectionKey, titleNl: 'Filtratie', items: [] };
     if (selections.filtration?.filterId) {
       const item = hydrateOptionItem(selections.filtration.filterId, 1);
@@ -256,14 +269,14 @@ const SummarySection = ({
     addMany(selections.filtration?.uv ?? [], filtrationGroup);
     out.push(filtrationGroup);
 
-    // ✅ Trappen (STAIRS)
+    // STAIRS
     out.push({
       id: 'STAIRS' as SectionKey,
       titleNl: 'Trappen',
       items: selections.stairs?.optionId ? [hydrateOptionItem(selections.stairs.optionId, 1)!].filter(Boolean) : [],
     });
 
-    // ✅ Bedieningspaneel (CONTROLUNIT)
+    // CONTROLUNIT
     out.push({
       id: 'CONTROLUNIT' as SectionKey,
       titleNl: 'Bedieningspaneel',
@@ -272,12 +285,11 @@ const SummarySection = ({
         : [],
     });
 
-    // ✅ Extra’s (EXTRAS)
+    // EXTRAS
     const extrasGroup: SummaryGroup = { id: 'EXTRAS' as SectionKey, titleNl: "Extra's", items: [] };
     addQtyMap(toQtyMap(selections.extras?.optionIds as any), extrasGroup);
     out.push(extrasGroup);
 
-    // Clean empty groups (except base)
     return out.filter((g) => g.id === 'BASE' || g.items.length > 0);
   }, [selections, optionByKey, baseLine]);
 
@@ -295,6 +307,21 @@ const SummarySection = ({
     return { totalIncl, totalExcl };
   }, [groups]);
 
+  const groupTotal = (g: SummaryGroup) => {
+    return g.items.reduce((acc, item) => {
+      const unit = isCompany ? item.unitPriceExcl : item.unitPriceIncl;
+      return acc + unit * item.quantity;
+    }, 0);
+  };
+
+  // Compact inline list per group: “Option A, Option B x2, …”
+  const groupInlineText = (g: SummaryGroup) => {
+    if (!g.items.length) return '—';
+    return g.items
+      .map((it) => `${it.name}${it.quantity > 1 ? ` x${it.quantity}` : ''}${it.included ? ' (inbegrepen)' : ''}`)
+      .join(', ');
+  };
+
   const Row = ({ item }: { item: LineItem }) => {
     const unit = isCompany ? item.unitPriceExcl : item.unitPriceIncl;
     const lineTotal = unit * item.quantity;
@@ -304,11 +331,7 @@ const SummarySection = ({
         <div className="flex items-start gap-3 min-w-0">
           {item.image ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={item.image}
-              alt=""
-              className="h-10 w-10 rounded-md object-cover border shrink-0"
-            />
+            <img src={item.image} alt="" className="h-10 w-10 rounded-md object-cover border shrink-0" />
           ) : (
             <div className="h-10 w-10 rounded-md border bg-gray-50 shrink-0" />
           )}
@@ -327,63 +350,120 @@ const SummarySection = ({
     );
   };
 
-  const groupTotal = (g: SummaryGroup) => {
-    return g.items.reduce((acc, item) => {
-      const unit = isCompany ? item.unitPriceExcl : item.unitPriceIncl;
-      return acc + unit * item.quantity;
-    }, 0);
-  };
-
   const canAdd = Boolean(product);
 
   return (
     <SectionWrapper title={title} description={description}>
       <Card>
-        <CardHeader>
-          <CardTitle>Prijsoverzicht</CardTitle>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div className="min-w-0">
+            <CardTitle>Prijsoverzicht</CardTitle>
+            <div className="text-sm text-gray-600 mt-1">
+              Totaal: €{formatCurrency(isCompany ? totals.totalExcl : totals.totalIncl)}
+            </div>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditing((v) => !v)}
+            className="shrink-0"
+          >
+            {isEditing ? 'Klaar' : 'Bewerk'}
+          </Button>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          {groups.map((g) => (
-            <div key={g.id} className="rounded-2xl border p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-base font-semibold text-brand-blue">{g.titleNl}</div>
-                  <div className="text-xs text-gray-500">
-                    Subtotaal: €{formatCurrency(groupTotal(g))}
+        <CardContent className="space-y-4">
+          {/* ✅ Compact view (default) */}
+          {!isEditing && (
+            <div className="space-y-3">
+              {groups.map((g) => (
+                <div
+                  key={g.id}
+                  className="flex items-start justify-between gap-4 rounded-xl border p-3"
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-brand-blue">{g.titleNl}</div>
+                    <div className="text-xs text-gray-600 mt-1 line-clamp-2">
+                      {groupInlineText(g)}
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <div className="text-sm font-semibold">€{formatCurrency(groupTotal(g))}</div>
                   </div>
                 </div>
+              ))}
+
+              <div className="border-t pt-3 flex justify-between font-semibold">
+                <span>Totaal</span>
+                <span>€{formatCurrency(isCompany ? totals.totalExcl : totals.totalIncl)}</span>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <Button onClick={onAddToCart} disabled={!canAdd || isDisabled}>
+                  Voeg toe aan winkelwagen
+                </Button>
 
                 <Button
                   variant="outline"
-                  size="sm"
-                  onClick={() => onEditSection(g.id)}
-                  className="shrink-0"
+                  onClick={() => setIsEditing(true)}
+                  disabled={!canAdd || isDisabled}
                 >
                   Wijzigen
                 </Button>
               </div>
+            </div>
+          )}
 
-              <div className="mt-3 space-y-2">
-                {g.items.map((item) => (
-                  <Row key={item.key} item={item} />
-                ))}
+          {/* ✅ Edit mode (expanded per-section, like before) */}
+          {isEditing && (
+            <div className="space-y-6">
+              {groups.map((g) => (
+                <div key={g.id} className="rounded-2xl border p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-base font-semibold text-brand-blue">{g.titleNl}</div>
+                      <div className="text-xs text-gray-500">
+                        Subtotaal: €{formatCurrency(groupTotal(g))}
+                      </div>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEditSection(g.id)}
+                      className="shrink-0"
+                    >
+                      Wijzigen
+                    </Button>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    {g.items.map((item) => (
+                      <Row key={item.key} item={item} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <div className="border-t pt-4 flex justify-between font-semibold">
+                <span>Totaal</span>
+                <span>€{formatCurrency(isCompany ? totals.totalExcl : totals.totalIncl)}</span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={onAddToCart} disabled={!canAdd || isDisabled}>
+                  Voeg toe aan winkelwagen
+                </Button>
+                <Button variant="outline" onClick={() => setIsEditing(false)}>
+                  Klaar
+                </Button>
               </div>
             </div>
-          ))}
-
-          <div className="border-t pt-4 flex justify-between font-semibold">
-            <span>Totaal</span>
-            <span>€{formatCurrency(isCompany ? totals.totalExcl : totals.totalIncl)}</span>
-          </div>
+          )}
         </CardContent>
       </Card>
-
-      <div className="mt-4">
-        <Button onClick={onAddToCart} disabled={!canAdd || isDisabled}>
-          Voeg toe aan winkelwagen
-        </Button>
-      </div>
     </SectionWrapper>
   );
 };

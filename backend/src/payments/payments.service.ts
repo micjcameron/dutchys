@@ -21,14 +21,38 @@ export class PaymentsService {
     this.mollieClient = this.mollieApiKey ? createMollieClient({ apiKey: this.mollieApiKey }) : null;
   }
 
+  private getBaseUrls() {
+    const apiBaseUrl =
+      this.configService.get<string>('NEXT_PUBLIC_API_BASE_URL') ??
+      this.configService.get<string>('API_BASE_URL') ??
+      '';
+    const siteBaseUrl =
+      this.configService.get<string>('NEXT_PUBLIC_SITE_URL') ??
+      this.configService.get<string>('SITE_URL') ??
+      '';
+
+    const normalize = (value: string) => value.replace(/\/+$/, '');
+
+    return {
+      apiBaseUrl: apiBaseUrl ? normalize(apiBaseUrl) : '',
+      siteBaseUrl: siteBaseUrl ? normalize(siteBaseUrl) : '',
+    };
+  }
+
   async createPayment(dto: CreatePaymentDto) {
     const mollieClient = this.getMollieClient();
+    const { apiBaseUrl, siteBaseUrl } = this.getBaseUrls();
+    if (!siteBaseUrl) {
+      throw new Error('NEXT_PUBLIC_SITE_URL is not configured');
+    }
+    const redirectUrl = `${siteBaseUrl}/payment-success`;
+    const webhookUrl = apiBaseUrl ? `${apiBaseUrl}/payments/webhook` : undefined;
     this.logger.log('Creating Mollie payment', {
       amountValue: dto.amountValue,
       currency: dto.currency,
       description: dto.description,
-      redirectUrl: dto.redirectUrl,
-      webhookUrl: dto.webhookUrl,
+      redirectUrl,
+      webhookUrl,
       metadata: dto.metadata,
     });
     const molliePayment = await mollieClient.payments.create({
@@ -37,8 +61,8 @@ export class PaymentsService {
         value: dto.amountValue,
       },
       description: dto.description,
-      redirectUrl: dto.redirectUrl,
-      webhookUrl: dto.webhookUrl,
+      redirectUrl,
+      webhookUrl,
       metadata: dto.metadata,
     });
 
@@ -48,8 +72,8 @@ export class PaymentsService {
       amountValue: dto.amountValue,
       currency: dto.currency,
       description: dto.description ?? null,
-      redirectUrl: dto.redirectUrl ?? null,
-      webhookUrl: dto.webhookUrl ?? null,
+      redirectUrl: redirectUrl ?? null,
+      webhookUrl: webhookUrl ?? null,
       metadata: dto.metadata ?? null,
     });
 

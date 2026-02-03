@@ -148,7 +148,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
                   <div className="flex items-center">
                     <Shield className="h-5 w-5 text-brand-blue mr-3" />
                     <div>
-                      <p className="font-medium">5 jaar garantie</p>
+                      <p className="font-medium">2 jaar garantie</p>
                       <p className="text-sm text-gray-500">Op materiaal- en constructiefouten</p>
                     </div>
                   </div>

@@ -18,15 +18,15 @@ type PaymentResponse = {
 };
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
-const failedStatuses = new Set(['Failed', 'Canceled', 'Expired']);
+const failedStatuses = new Set(['FAILED', 'CANCELED', 'EXPIRED']);
 const statusLabels: Record<string, string> = {
-  Paid: 'Betaald',
-  Pending: 'In behandeling',
-  Open: 'Openstaand',
-  Authorized: 'Geautoriseerd',
-  Failed: 'Mislukt',
-  Canceled: 'Geannuleerd',
-  Expired: 'Verlopen',
+  PAID: 'Betaald',
+  PENDING: 'In behandeling',
+  OPEN: 'Openstaand',
+  AUTHORIZED: 'Geautoriseerd',
+  FAILED: 'Mislukt',
+  CANCELED: 'Geannuleerd',
+  EXPIRED: 'Verlopen',
 };
 
 export default function PaymentSuccessPage() {
@@ -65,7 +65,7 @@ export default function PaymentSuccessPage() {
         if (isActive) {
           setPayment(data);
           clearLastPaymentId();
-          if (data.status === 'Paid') {
+          if (data.status === 'PAID') {
             clearCart();
           }
           console.info('[payment-success] payment loaded', {

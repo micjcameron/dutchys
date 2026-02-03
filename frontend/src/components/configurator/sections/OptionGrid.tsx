@@ -81,9 +81,9 @@ const OptionGrid = ({
                 )}
                 <div className="flex-1">
                   <p className="text-sm text-gray-600 mb-2">{option.description}</p>
-                  {type && <p className="text-xs text-gray-500">Type: {formatValue(type)}</p>}
+                  {type && <p className="text-xs text-gray-500">Soort: {formatValue(type)}</p>}
                   {power && <p className="text-xs text-gray-500">Vermogen: {power}</p>}
-                  {voltage && <p className="text-xs text-gray-500">Voltage: {voltage}</p>}
+                  {voltage && <p className="text-xs text-gray-500">Spanning: {voltage}</p>}
                   {wifi !== undefined && (
                     <p className="text-xs text-gray-500">Wifi: {wifi ? 'Ja' : 'Nee'}</p>
                   )}

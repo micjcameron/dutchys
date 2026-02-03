@@ -19,7 +19,7 @@ const withRevalidate = (init?: NextFetchInit): NextFetchInit | undefined => {
 };
 
 export const fetchCatalog = async (type?: string, init?: RequestInit) => {
-  const url = new URL(`${API_BASE_URL}/api/public/catalog`);
+  const url = new URL(`${API_BASE_URL}/public/catalog`);
   if (type) {
     url.searchParams.set('type', type.toUpperCase());
   }
@@ -33,7 +33,7 @@ export const fetchCatalog = async (type?: string, init?: RequestInit) => {
 };
 
 export const fetchTemplate = async (type: string, init?: RequestInit) => {
-  const url = new URL(`${API_BASE_URL}/api/public/catalog/template`);
+  const url = new URL(`${API_BASE_URL}/public/catalog/template`);
   url.searchParams.set('type', type.toUpperCase());
   const response = await fetch(url.toString(), {
     ...(withRevalidate(init) ?? {}),
@@ -49,7 +49,7 @@ export const evaluateCatalog = async (payload: {
   customerType?: string | null;
   selections: ConfigSelections;
 }) => {
-  const response = await fetch(`${API_BASE_URL}/api/public/catalog/evaluate`, {
+  const response = await fetch(`${API_BASE_URL}/public/catalog/evaluate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

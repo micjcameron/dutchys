@@ -7,10 +7,10 @@ const STORAGE_KEY = 'configurator-state';
 const STORAGE_VERSION = '1.0.0';
 const SESSION_KEY = 'configurator-session';
 const PRODUCT_SNAPSHOT_KEY = 'configurator-product';
-const CART_STORAGE_KEY = 'sauna-cart';
+const CART_STORAGE_KEY = 'user-cart';
 const CART_VERSION = '1.0.0';
 const LAST_PAYMENT_ID_KEY = 'last-payment-id';
-export const CART_UPDATED_EVENT = 'sauna-cart-updated';
+export const CART_UPDATED_EVENT = 'user-cart-updated';
 
 /**
  * Save configurator state to localStorage
@@ -456,6 +456,30 @@ export const addCartItem = (item) => {
       metadata: item.metadata || {},
     };
     cart.items.push(newItem);
+    saveCart(cart.items, cart.cartId);
+    return cart.items;
+  }
+
+  if (item.type === 'extra') {
+    const extraId = item.id || `extra-${item.key || item.optionKey || Date.now()}`;
+    const existing = cart.items.find((entry) => entry.type === 'extra' && entry.id === extraId);
+
+    if (existing) {
+      existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+    } else {
+      cart.items.push({
+        id: extraId,
+        type: 'extra',
+        quantity: item.quantity || 1,
+        title: item.title,
+        description: item.description,
+        image: item.image,
+        priceIncl: item.priceIncl,
+        priceExcl: item.priceExcl,
+        metadata: item.metadata || {},
+      });
+    }
+
     saveCart(cart.items, cart.cartId);
     return cart.items;
   }

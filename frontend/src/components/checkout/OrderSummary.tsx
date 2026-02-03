@@ -5,12 +5,22 @@ type OrderSummaryProps = {
   subtotalIncl: number;
   subtotalExcl: number;
   vatTotal: number;
+  deliveryFee?: number | null;
+  totalIncl?: number;
 };
 
 const formatCurrency = (value: number) =>
   value.toLocaleString('nl-NL', { minimumFractionDigits: 2 });
 
-export default function OrderSummary({ entries, subtotalIncl, subtotalExcl, vatTotal }: OrderSummaryProps) {
+export default function OrderSummary({
+  entries,
+  subtotalIncl,
+  subtotalExcl,
+  vatTotal,
+  deliveryFee,
+  totalIncl,
+}: OrderSummaryProps) {
+  const finalTotal = totalIncl ?? subtotalIncl;
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
       <h2 className="text-xl font-semibold text-brand-blue mb-4">Bestelling</h2>
@@ -36,12 +46,12 @@ export default function OrderSummary({ entries, subtotalIncl, subtotalExcl, vatT
         </div>
         <div className="flex justify-between">
           <span>Levering</span>
-          <span>Wordt later berekend</span>
+          <span>{deliveryFee != null ? `€ ${formatCurrency(deliveryFee)}` : 'Offerte'}</span>
         </div>
       </div>
       <div className="border-t pt-4 mt-4 flex justify-between text-lg font-semibold text-brand-blue">
         <span>Totaal (incl btw)</span>
-        <span>€ {formatCurrency(subtotalIncl)}</span>
+        <span>€ {formatCurrency(finalTotal)}</span>
       </div>
       <p className="text-xs text-gray-500 mt-4">
         Na bevestiging ga je door naar de betaalpagina van iDEAL.

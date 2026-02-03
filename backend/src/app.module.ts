@@ -9,6 +9,7 @@ import { CatalogModule } from './catalog/catalog.module';
 import { PaymentsModule } from './payments/payments.module';
 import { SalesModule } from './sales/sales.module';
 import { SessionsModule } from './sessions/sessions.module';
+import { CommunicationModule } from './communication/communication.module';
 
 @Module({
   imports: [
@@ -23,9 +24,11 @@ import { SessionsModule } from './sessions/sessions.module';
         const username = config.get<string>('DB_USER');
         const password = config.get<string>('DB_PASSWORD');
         const database = config.get<string>('DB_NAME');
-    
-        // HARD FORCE SSL (for DO managed Postgres)
-        const ssl = { rejectUnauthorized: false };
+        const dbSslRaw = (config.get<string>('DB_SSL') ?? '').toLowerCase();
+      
+        console.log('dbSslRaw', dbSslRaw);
+        // Only set ssl props if enabled. If you pass an object, pg will attempt SSL.
+        const ssl = dbSslRaw === 'true' ? { rejectUnauthorized: false } : undefined;
     
         // TEMP LOG (remove after working)
         console.log('[DB]', { host, port, username, database, ssl: true });
@@ -56,6 +59,7 @@ import { SessionsModule } from './sessions/sessions.module';
     }),
     CartsModule,
     CatalogModule,
+    CommunicationModule,
     PaymentsModule,
     SalesModule,
     SessionsModule,

@@ -1,0 +1,65 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 1 /Kids [3 0 R] >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Length 2948 >>
+stream
+BT /F2 18 Tf 1 0 0 1 54.00 738.00 Tm (Dutchys App Summary) Tj ET
+BT /F1 9 Tf 1 0 0 1 54.00 713.70 Tm (Repo: dutchys) Tj ET
+BT /F2 12 Tf 1 0 0 1 54.00 699.30 Tm (What it is) Tj ET
+BT /F1 10 Tf 1 0 0 1 54.00 684.30 Tm (Dutchys is a Next.js storefront for hot tubs, saunas, and cold plunge products with browsing and) Tj ET
+BT /F1 10 Tf 1 0 0 1 54.00 671.80 Tm (a guided configurator.) Tj ET
+BT /F1 10 Tf 1 0 0 1 54.00 659.30 Tm (The frontend integrates with a NestJS API for catalog data, carts, sessions, sales, and Mollie) Tj ET
+BT /F1 10 Tf 1 0 0 1 54.00 646.80 Tm (payments.) Tj ET
+BT /F2 12 Tf 1 0 0 1 54.00 630.30 Tm (Who it is for) Tj ET
+BT /F1 10 Tf 1 0 0 1 54.00 615.30 Tm (Primary audience: private and business customers shopping for Dutchys wellness products.) Tj ET
+BT /F2 12 Tf 1 0 0 1 54.00 598.80 Tm (What it does) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 583.80 Tm (- Browse category landing pages for hottubs, saunas, and cold plunge.) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 571.30 Tm (- Filter and sort product lists by size, shape, capacity, and price.) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 558.80 Tm (- View product detail pages with images, descriptions, and pricing.) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 546.30 Tm (- Configure custom hottubs or saunas through step-by-step option sections.) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 533.80 Tm (- Add products or configurations to a cart and adjust quantities.) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 521.30 Tm (- Checkout with customer details, create a payment, and view payment status.) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 508.80 Tm (- Contact page with info and a demo inquiry form \(no email send\).) Tj ET
+BT /F2 12 Tf 1 0 0 1 54.00 492.30 Tm (How it works) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 477.30 Tm (- Frontend: Next.js App Router pages in frontend/src/app with UI in frontend/src/components.) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 464.80 Tm (- API clients in frontend/src/api call NEXT_PUBLIC_API_BASE_URL for catalog, sessions, carts,) Tj ET
+BT /F1 10 Tf 1 0 0 1 78.00 452.30 Tm (sales, payments.) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 439.80 Tm (- Configurator loads catalog + template, saves selections, and persists session/cart in) Tj ET
+BT /F1 10 Tf 1 0 0 1 78.00 427.30 Tm (localStorage.) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 414.80 Tm (- Backend: NestJS modules for catalog, carts, sessions, sales, payments; Postgres via TypeORM.) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 402.30 Tm (- Payments integrate with Mollie; status fetched on the payment success page.) Tj ET
+BT /F2 12 Tf 1 0 0 1 54.00 385.80 Tm (How to run) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 370.80 Tm (- Backend: cd backend; copy .env.example to .env \(set DB and Mollie\); npm i; npm run db:up;) Tj ET
+BT /F1 10 Tf 1 0 0 1 78.00 358.30 Tm (npm run start:dev.) Tj ET
+BT /F1 10 Tf 1 0 0 1 68.00 345.80 Tm (- Frontend: cd frontend; copy .env.example to .env \(set NEXT_PUBLIC_API_BASE_URL\); npm i; npm) Tj ET
+BT /F1 10 Tf 1 0 0 1 78.00 333.30 Tm (run dev.) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000321 00000 n 
+0000000396 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+3396
+%%EOF

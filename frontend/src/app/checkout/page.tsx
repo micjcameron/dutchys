@@ -25,8 +25,6 @@ type Product = {
 const toExcl = (value: number, vatRatePercent = 21) =>
   Math.round(toPriceExcl(value, vatRatePercent) * 100) / 100;
 const formatAmountValue = (value: number) => value.toFixed(2);
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8081';
-const siteBaseUrl = process.env.NEXT_PUBLIC_SITE_URL;
 const toApiProductType = (value?: CartItem['productType']): ApiProductType | undefined => {
   if (value === 'sauna') {
     return 'SAUNA';
@@ -41,6 +39,7 @@ const toApiProductType = (value?: CartItem['productType']): ApiProductType | und
 };
 
 const defaultForm: CheckoutFormData = {
+  delivery: true,
   firstName: '',
   lastName: '',
   email: '',
@@ -52,6 +51,8 @@ const defaultForm: CheckoutFormData = {
   country: 'Nederland',
   deliveryNotes: '',
 };
+
+const DELIVERY_FEE = 399;
 
 export default function CheckoutPage() {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -97,6 +98,22 @@ export default function CheckoutPage() {
   const entries = useMemo(() => {
     return items
       .map((item, index) => {
+        if (item.type === 'extra') {
+          const priceIncl = item.priceIncl || 0;
+          const priceExcl = item.priceExcl ?? toExcl(priceIncl);
+          const quantity = item.quantity || 1;
+          return {
+            cartKey: item.id || `extra-${index}`,
+            type: 'extra',
+            title: item.title || 'Extra',
+            quantity,
+            priceIncl,
+            priceExcl,
+            lineTotalIncl: priceIncl * quantity,
+            lineTotalExcl: priceExcl * quantity,
+          };
+        }
+
         if (item.type === 'configurator') {
           const priceIncl = item.priceIncl || 0;
           const priceExcl = item.priceExcl ?? toExcl(priceIncl);
@@ -145,6 +162,8 @@ export default function CheckoutPage() {
     [entries]
   );
   const vatTotal = useMemo(() => subtotalIncl - subtotalExcl, [subtotalExcl, subtotalIncl]);
+  const deliveryFee = formData.delivery ? DELIVERY_FEE : 0;
+  const totalIncl = subtotalIncl + deliveryFee;
   const cartProductType = useMemo(() => {
     const types = items
       .map((item) => item.productType)
@@ -190,11 +209,9 @@ export default function CheckoutPage() {
 
       console.info('[checkout] creating payment', { cartId, saleId: sale?.id });
       const payment = await createPayment({
-        amountValue: formatAmountValue(subtotalIncl),
+        amountValue: formatAmountValue(totalIncl),
         currency: 'EUR',
         description: 'Dutchys order',
-        redirectUrl: siteBaseUrl ? `${siteBaseUrl}/payment-success` : `${apiBaseUrl}/payment-success`,
-        webhookUrl: `${apiBaseUrl}/payments/webhook`,
         metadata: {
           cartId,
           saleId: sale?.id ?? null,
@@ -244,6 +261,8 @@ export default function CheckoutPage() {
               subtotalIncl={subtotalIncl}
               subtotalExcl={subtotalExcl}
               vatTotal={vatTotal}
+              deliveryFee={formData.delivery ? DELIVERY_FEE : null}
+              totalIncl={totalIncl}
             />
           </aside>
         </div>

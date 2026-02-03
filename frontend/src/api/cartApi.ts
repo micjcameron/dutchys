@@ -1,3 +1,5 @@
+import { secureRequest } from "./secureFetch";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 
 const handleJsonResponse = async (response: Response) => {
@@ -10,33 +12,19 @@ const handleJsonResponse = async (response: Response) => {
 };
 
 export const createCart = async (items: unknown[], sessionId?: string | null) => {
-  const response = await fetch(`${API_BASE_URL}/carts`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ items, sessionId: sessionId ?? undefined }),
-  });
+  const response = await secureRequest(`${API_BASE_URL}/carts`, { items, sessionId: sessionId ?? undefined });
 
   return handleJsonResponse(response);
 };
 
 export const updateCart = async (cartId: string, items: unknown[]) => {
-  const response = await fetch(`${API_BASE_URL}/carts/${cartId}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ items }),
-  });
+  const response = await secureRequest(`${API_BASE_URL}/carts/${cartId}`, { items }, 'PATCH');
 
   return handleJsonResponse(response);
 };
 
 export const deleteCart = async (cartId: string) => {
-  const response = await fetch(`${API_BASE_URL}/carts/${cartId}`, {
-    method: 'DELETE',
-  });
+  const response = await secureRequest(`${API_BASE_URL}/carts/${cartId}`, undefined, 'DELETE');
 
   return handleJsonResponse(response);
 };

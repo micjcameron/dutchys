@@ -3,7 +3,7 @@
 import { useState, useEffect, memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Home, Info, Phone, Mail, ShoppingBag } from 'lucide-react';
+import { Menu, Home, Info, Phone, Mail, ShoppingBag, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,6 +31,7 @@ const Navbar = memo(() => {
     { name: "Sauna's", href: '/saunas', icon: 'sauna' },
     { name: 'Cold Plunge', href: '/cold-plunge', icon: 'plunge' },
     { name: 'Configurator', href: '/configurator', icon: 'configurator' },
+    { name: "Extra's", href: '/extras', icon: Sparkles },
     { name: 'Over Ons', href: '/about', icon: Info },
     { name: 'Contact', href: '/contact', icon: Phone },
   ];

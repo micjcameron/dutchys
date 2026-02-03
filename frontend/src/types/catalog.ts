@@ -61,7 +61,12 @@ export type ConfigSelections = {
 
   heaterInstallation?: { optionId?: string | null };
   cooler?: { optionId?: string | null };
-  heating?: { optionId?: string | null; extras?: string[] };
+  heating?: { 
+    optionId?: string | null;          // used for INTERNAL-only or EXTERNAL-only
+    internalOptionId?: string | null;  // used for HYBRID
+    externalOptionId?: string | null;  // used for HYBRID
+    extras?: string[];                 // add-ons (still multi)
+  };
 
   materials?: { internalMaterialId?: string | null; externalMaterialId?: string | null };
   insulation?: { optionId?: string | null };
