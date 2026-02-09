@@ -2,19 +2,15 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { sora, inter } from '@/lib/fonts'
 import { Toaster } from '@/components/ui/sonner'
+import DebugClientLog from '@/components/DebugClientLog'
 
 export const metadata: Metadata = {
   title: 'Hottubs & Sauna\'s - Premium Wellness Experience',
   description: 'Ontdek onze premium collectie hottubs en sauna\'s. Professioneel advies, snelle levering en uitstekende service.',
 }
 
-const isWebsiteActive = (() => {
-  const raw = process.env.NEXT_PUBLIC_IS_WEBSITE_ACTIVE;
-  console.log(raw)
-  console.log(raw === 'true')
-  console.log(raw === '1')
-  return raw === 'true' || raw === '1';
-})();
+const raw = process.env.NEXT_PUBLIC_IS_WEBSITE_ACTIVE;
+const isWebsiteActive = raw === 'true' || raw === '1';
 
 export default function RootLayout({
   children,
@@ -27,6 +23,9 @@ export default function RootLayout({
         <link rel="icon" href="logos/favicon.ico" />
       </head>
       <body className={inter.className}>
+        <DebugClientLog name="NEXT_PUBLIC_IS_WEBSITE_ACTIVE" value={raw} />
+        <DebugClientLog name="isWebsiteActive" value={isWebsiteActive} />
+
         {isWebsiteActive ? (
           <>
             {children}
