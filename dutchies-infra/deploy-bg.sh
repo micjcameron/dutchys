@@ -41,6 +41,19 @@ wait_backend_healthy() {
   return 1
 }
 
+wait_frontend_ready() {
+  log "Waiting for frontend to become ready (/)..."
+  for i in {1..60}; do
+    if $COMPOSE exec -T caddy sh -lc 'wget -qO- http://frontend:3000/ >/dev/null' 2>/dev/null; then
+      log "frontend is ready."
+      return 0
+    fi
+    sleep 1
+  done
+  echo "Timed out waiting for frontend" >&2
+  return 1
+}
+
 build_flags() {
   if [[ "${NO_CACHE}" == "1" ]]; then
     echo "--no-cache"
@@ -92,6 +105,8 @@ $COMPOSE build $(build_flags) frontend
 
 log "Recreating frontend (brief blip at most)..."
 $COMPOSE up -d --force-recreate frontend
+
+wait_frontend_ready
 
 log "Status:"
 $COMPOSE ps
