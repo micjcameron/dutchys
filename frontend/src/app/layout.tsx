@@ -9,21 +9,22 @@ export const metadata: Metadata = {
   description: 'Ontdek onze premium collectie hottubs en sauna\'s. Professioneel advies, snelle levering en uitstekende service.',
 }
 
-const raw = process.env.NEXT_PUBLIC_IS_WEBSITE_ACTIVE;
-const isWebsiteActive = raw === 'true' || raw === '1';
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const raw = process.env.IS_WEBSITE_ACTIVE;
+  const isWebsiteActive = raw === 'true' || raw === '1';
+  console.log('IS_WEBSITE_ACTIVE raw=', raw, 'computed=', isWebsiteActive);
+
   return (
     <html lang="nl" className={`${sora.variable} ${inter.variable}`}>
       <head>
         <link rel="icon" href="logos/favicon.ico" />
       </head>
       <body className={inter.className}>
-        <DebugClientLog name="NEXT_PUBLIC_IS_WEBSITE_ACTIVE" value={raw} />
+        <DebugClientLog name="IS_WEBSITE_ACTIVE" value={raw} />
         <DebugClientLog name="isWebsiteActive" value={isWebsiteActive} />
 
         {isWebsiteActive ? (
