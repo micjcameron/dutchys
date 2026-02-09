@@ -10,6 +10,9 @@ export const metadata: Metadata = {
 
 const isWebsiteActive = (() => {
   const raw = process.env.NEXT_PUBLIC_IS_WEBSITE_ACTIVE;
+  console.log(raw)
+  console.log(raw === 'true')
+  console.log(raw === '1')
   return raw === 'true' || raw === '1';
 })();
 
